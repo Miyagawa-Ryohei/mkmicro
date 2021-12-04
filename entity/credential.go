@@ -1,6 +1,6 @@
 package entity
 
-import "mkmicro/infra"
+import "github.com/Miyagawa-Ryohei/mkmicro/infra"
 
 type SessionManager interface {
 	UpdateSession()

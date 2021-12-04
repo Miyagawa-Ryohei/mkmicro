@@ -1,6 +1,6 @@
 package gateway
 
-import "mkmicro/entity"
+import "github.com/Miyagawa-Ryohei/mkmicro/entity"
 
 type StorageProxy struct {
 	session entity.StorageSessionUpdater

@@ -1,4 +1,4 @@
-module mkmicro
+module github.com/Miyagawa-Ryohei/mkmicro
 
 go 1.16
 

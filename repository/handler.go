@@ -1,6 +1,6 @@
 package repository
 
-import "mkmicro/entity"
+import "github.com/Miyagawa-Ryohei/mkmicro/entity"
 
 type Handler interface {
 	Exec(msg entity.Message, dist entity.SessionManager) bool

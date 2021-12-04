@@ -2,11 +2,11 @@ package session
 
 import (
 	"github.com/aws/aws-sdk-go/service/sqs"
-	"mkmicro/adapter/gateway"
-	"mkmicro/adapter/gateway/driver/queue"
-	"mkmicro/adapter/gateway/driver/storage"
-	"mkmicro/entity"
-	"mkmicro/infra"
+	"github.com/Miyagawa-Ryohei/mkmicro/adapter/gateway"
+	"github.com/Miyagawa-Ryohei/mkmicro/adapter/gateway/driver/queue"
+	"github.com/Miyagawa-Ryohei/mkmicro/adapter/gateway/driver/storage"
+	"github.com/Miyagawa-Ryohei/mkmicro/entity"
+	"github.com/Miyagawa-Ryohei/mkmicro/infra"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"

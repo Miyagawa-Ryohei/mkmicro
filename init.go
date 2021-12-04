@@ -1,9 +1,9 @@
 package main
 
 import (
-	"mkmicro/handler"
-	"mkmicro/repository"
-	"mkmicro/router"
+	"github.com/Miyagawa-Ryohei/mkmicro/handler"
+	"github.com/Miyagawa-Ryohei/mkmicro/repository"
+	"github.com/Miyagawa-Ryohei/mkmicro/router"
 	"net/http"
 )
 

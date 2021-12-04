@@ -2,7 +2,7 @@ package handler
 
 import (
 	"fmt"
-	"mkmicro/entity"
+	"github.com/Miyagawa-Ryohei/mkmicro/entity"
 )
 
 type SampleHandler struct {}

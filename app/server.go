@@ -2,7 +2,7 @@ package app
 
 import (
 	"github.com/labstack/echo/v4"
-	"mkmicro/infra"
+	"github.com/Miyagawa-Ryohei/mkmicro/infra"
 )
 
 type Server struct {

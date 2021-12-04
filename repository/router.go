@@ -2,7 +2,7 @@ package repository
 
 import (
 	"github.com/labstack/echo/v4"
-	"mkmicro/entity"
+	"github.com/Miyagawa-Ryohei/mkmicro/entity"
 )
 
 type RouteHandler func(msg entity.Message) []byte

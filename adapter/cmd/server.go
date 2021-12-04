@@ -1,8 +1,8 @@
 package cmd
 
 import (
+	"github.com/Miyagawa-Ryohei/mkmicro/app"
 	"github.com/spf13/cobra"
-	"mkmicro/app"
 )
 
 var serverCmd = &cobra.Command{

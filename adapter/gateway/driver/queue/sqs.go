@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/sqs"
-	"mkmicro/entity"
-	"mkmicro/infra"
+	"github.com/Miyagawa-Ryohei/mkmicro/entity"
+	"github.com/Miyagawa-Ryohei/mkmicro/infra"
 )
 
 type SQSConfig struct {

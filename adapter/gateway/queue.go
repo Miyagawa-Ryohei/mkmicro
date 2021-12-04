@@ -1,7 +1,7 @@
 package gateway
 
 import (
-	"mkmicro/entity"
+	"github.com/Miyagawa-Ryohei/mkmicro/entity"
 )
 
 type QueueProxy struct {

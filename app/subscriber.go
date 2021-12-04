@@ -3,8 +3,8 @@ package app
 import (
 	"fmt"
 	"log"
-	"mkmicro/entity"
-	"mkmicro/infra"
+	"github.com/Miyagawa-Ryohei/mkmicro/entity"
+	"github.com/Miyagawa-Ryohei/mkmicro/infra"
 	"sync"
 )
 

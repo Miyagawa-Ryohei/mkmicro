@@ -1,6 +1,6 @@
 package main
 
-import "mkmicro/adapter/cmd"
+import "github.com/Miyagawa-Ryohei/mkmicro/adapter/cmd"
 
 func main () {
 	Initialize()
