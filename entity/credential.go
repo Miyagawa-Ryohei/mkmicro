@@ -1,7 +1,5 @@
 package entity
 
-import "github.com/Miyagawa-Ryohei/mkmicro/infra"
-
 type SessionManager interface {
 	UpdateSession()
 	GetQueue() (QueueDriver, error)
@@ -20,5 +18,5 @@ type StorageSessionUpdater interface {
 
 type SessionManagerFactory interface {
 	Create() SessionManager
-	CreateWithConfig(queue infra.QueueConfig, session infra.SessionConfig) SessionManager
+	CreateWithConfig(queue QueueConfig, session SessionConfig) SessionManager
 }

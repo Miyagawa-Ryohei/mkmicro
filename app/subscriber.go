@@ -2,9 +2,9 @@ package app
 
 import (
 	"fmt"
-	"log"
 	"github.com/Miyagawa-Ryohei/mkmicro/entity"
-	"github.com/Miyagawa-Ryohei/mkmicro/infra"
+	"github.com/Miyagawa-Ryohei/mkmicro/repository"
+	"log"
 	"sync"
 )
 
@@ -16,7 +16,7 @@ type Subscriber struct {
 
 func (s *Subscriber) Listen() {
 
-	repo := infra.GetHandlerRepository()
+	repo := repository.GetHandlerRepository()
 	handlers := repo.Get()
 	log.Print(fmt.Sprintf("%d handler is found", len(handlers)))
 	log.Print("start subscribe")

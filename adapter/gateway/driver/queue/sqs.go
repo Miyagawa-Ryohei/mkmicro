@@ -2,10 +2,9 @@ package queue
 
 import (
 	"bytes"
+	"github.com/Miyagawa-Ryohei/mkmicro/entity"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/sqs"
-	"github.com/Miyagawa-Ryohei/mkmicro/entity"
-	"github.com/Miyagawa-Ryohei/mkmicro/infra"
 )
 
 type SQSConfig struct {
@@ -105,7 +104,7 @@ func (d *SQSDriver) ChangeMessageVisibility(msg entity.ChangeVisibilityMessage) 
 	return nil
 }
 
-func NewSQSDriver (q *sqs.SQS, config infra.QueueConfig) *SQSDriver {
+func NewSQSDriver (q *sqs.SQS, config entity.QueueConfig) *SQSDriver {
 	return &SQSDriver{
 		queue: q,
 		url : config.URL,

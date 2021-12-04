@@ -1,12 +1,11 @@
 package session
 
 import (
-	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/Miyagawa-Ryohei/mkmicro/adapter/gateway"
 	"github.com/Miyagawa-Ryohei/mkmicro/adapter/gateway/driver/queue"
 	"github.com/Miyagawa-Ryohei/mkmicro/adapter/gateway/driver/storage"
 	"github.com/Miyagawa-Ryohei/mkmicro/entity"
-	"github.com/Miyagawa-Ryohei/mkmicro/infra"
+	"github.com/aws/aws-sdk-go/service/sqs"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -16,8 +15,8 @@ import (
 )
 
 type STSManager struct{
-	queueConfig infra.QueueConfig
-	sessionConfig infra.SessionConfig
+	queueConfig entity.QueueConfig
+	sessionConfig entity.SessionConfig
 	sess *session.Session
 	sSess *session.Session
 }
@@ -59,7 +58,7 @@ func (s *STSManager) UpdateStorage() (entity.StorageDriver, error) {
 	return storage.NewS3Driver(d), nil
 }
 
-func newSTSSTSManager (queueConfig infra.QueueConfig, sessionConfig infra.SessionConfig) *STSManager {
+func newSTSSTSManager (queueConfig entity.QueueConfig, sessionConfig entity.SessionConfig) *STSManager {
 
 	awsConfig := &aws.Config{}
 	if sessionConfig.Endpoint != "" {
@@ -88,19 +87,19 @@ func newSTSSTSManager (queueConfig infra.QueueConfig, sessionConfig infra.Sessio
 }
 
 type STSManagerFactory struct {
-	queue infra.QueueConfig
-	sess infra.SessionConfig
+	queue entity.QueueConfig
+	sess entity.SessionConfig
 }
 
 func(f STSManagerFactory) Create () entity.SessionManager {
 	return newSTSSTSManager(f.queue, f.sess)
 }
 
-func(f STSManagerFactory) CreateWithConfig(queue infra.QueueConfig, sess infra.SessionConfig) entity.SessionManager {
+func(f STSManagerFactory) CreateWithConfig(queue entity.QueueConfig, sess entity.SessionConfig) entity.SessionManager {
 	return newSTSSTSManager(queue, sess)
 }
 
-func NewSTSManagerFactory(queue infra.QueueConfig, sess infra.SessionConfig) STSManagerFactory {
+func NewSTSManagerFactory(queue entity.QueueConfig, sess entity.SessionConfig) STSManagerFactory {
 	return STSManagerFactory{
 		queue: queue,
 		sess: sess,

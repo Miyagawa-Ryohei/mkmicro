@@ -21,7 +21,7 @@ var WorkerCmd = entity.WorkerCommand{
 
 func GetSubscriber () *app.Subscriber {
 	configLoader := infra.ConfigLoader{}
-	config := new(infra.Config)
+	config := new(entity.Config)
 	configLoader.Load(config)
 	factory := session.NewSTSManagerFactory(config.Queue, config.Session)
 	sess := factory.Create()

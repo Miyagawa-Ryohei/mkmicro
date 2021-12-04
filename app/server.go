@@ -1,8 +1,8 @@
 package app
 
 import (
+	"github.com/Miyagawa-Ryohei/mkmicro/repository"
 	"github.com/labstack/echo/v4"
-	"github.com/Miyagawa-Ryohei/mkmicro/infra"
 )
 
 type Server struct {
@@ -15,7 +15,7 @@ func (s *Server) Listen() {
 }
 
 func (s *Server) Init() {
-	repo := infra.GetRouteRepository()
+	repo := repository.GetRouteRepository()
 	handlerMap := repo.Get()
 	for path, methods := range handlerMap {
 		for method, handler := range methods {

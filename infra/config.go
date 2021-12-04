@@ -5,20 +5,6 @@ import(
 	"os"
 )
 
-type QueueConfig struct {
-	URL string
-}
-
-type SessionConfig struct {
-	Endpoint string
-	Region string
-	RoleArn string
-}
-
-type Config struct {
-	Queue QueueConfig
-	Session SessionConfig
-}
 
 type ConfigLoader struct {
 	Name *string
