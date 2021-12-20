@@ -3,7 +3,7 @@ package repository
 import "github.com/Miyagawa-Ryohei/mkmicro/entity"
 
 type Handler interface {
-	Exec(msg entity.Message, dist entity.SessionManager) bool
+	Exec(msg entity.Message, dist entity.SessionManager) error
 	GetResultQueueConfig() *entity.QueueConfig
 	GetResultSessionConfig() *entity.SessionConfig
 }

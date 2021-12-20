@@ -7,9 +7,9 @@ import (
 
 type SampleHandler struct {}
 
-func (h SampleHandler) Exec(msg entity.Message, dist entity.SessionManager) bool {
+func (h SampleHandler) Exec(msg entity.Message, dist entity.SessionManager) error {
 	fmt.Printf("%s",msg.GetBody())
-	return true
+	return nil
 }
 
 func (h SampleHandler) GetResultQueueConfig() *entity.QueueConfig {
