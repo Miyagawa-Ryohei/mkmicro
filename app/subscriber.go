@@ -53,7 +53,9 @@ func (s *Subscriber) Listen() {
 				result := true
 
 				for index, handler := range handlers {
-					result = result && handler.Exec(target, s.dist[index])
+					if err := handler.Exec(target, s.dist[index]); err != nil {
+						result = false
+					}
 				}
 				if result {
 					_ = queue.DeleteMessage(target)
