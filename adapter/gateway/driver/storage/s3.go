@@ -52,11 +52,13 @@ func (d *S3Driver) Get(bucket string, key string) ([]byte, error) {
 		return nil, err
 	}
 
-	buf := []byte{}
-	if _, err := resp.Body.Read(buf); err != nil {
+	buf := new(bytes.Buffer)
+	_, err = buf.ReadFrom(resp.Body)
+	defer resp.Body.Close()
+	if  err != nil {
 		return nil, err
 	}
-	return buf, nil
+	return buf.Bytes(), nil
 }
 
 
