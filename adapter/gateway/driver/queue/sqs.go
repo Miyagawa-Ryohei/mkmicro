@@ -112,7 +112,7 @@ func (d *SQSDriver) ChangeMessageVisibility(msg entity.ChangeVisibilityMessage) 
 func NewSQSDriver (q *sqs.Client, config *entity.QueueConfig) *SQSDriver {
 	return &SQSDriver{
 		queue: q,
-		url : config.URL+"/queue/sample",
+		url : config.URL,
 		config : config,
 	}
 }
