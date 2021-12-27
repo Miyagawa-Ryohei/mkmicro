@@ -9,14 +9,14 @@ type SessionManager interface {
 }
 
 type QueueSessionUpdater interface {
-	UpdateQueue() (QueueDriver, error)
+	UpdateQueue(cfg *QueueConfig) (QueueDriver, error)
 }
 
 type StorageSessionUpdater interface {
-	UpdateStorage() (StorageDriver, error)
+	UpdateStorage(cfg *StorageConfig) (StorageDriver, error)
 }
 
 type SessionManagerFactory interface {
-	Create() SessionManager
-	CreateWithConfig(queue QueueConfig, session SessionConfig) SessionManager
+	Create() (SessionManager, error)
+	CreateWithConfig(queue QueueConfig, session StorageConfig) (SessionManager, error)
 }

@@ -2,9 +2,12 @@ package queue
 
 import (
 	"bytes"
+	"context"
 	"github.com/Miyagawa-Ryohei/mkmicro/entity"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/sqs"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/sqs"
+	"github.com/aws/aws-sdk-go-v2/service/sqs/types"
+	"log"
 )
 
 type SQSConfig struct {
@@ -13,11 +16,12 @@ type SQSConfig struct {
 
 type SQSDriver struct {
 	url  string
-	queue *sqs.SQS
+	queue *sqs.Client
+	config *entity.QueueConfig
 }
 
 type SQSMessage struct {
-	raw *sqs.Message
+	raw *types.Message
 }
 
 func (m *SQSMessage) GetBody() []byte {
@@ -32,39 +36,40 @@ func (m *SQSMessage) GetDeleteID() string {
 	return *m.raw.ReceiptHandle
 }
 
+func (d *SQSDriver) GetConfig() *entity.QueueConfig {
+	return d.config
+}
 func (d *SQSDriver) PutMessage(raw []byte) (error) {
 
 	params := &sqs.SendMessageInput{
 		MessageBody:  aws.String(string(raw)),
 		QueueUrl:     aws.String(d.url),
-		DelaySeconds: aws.Int64(1),
+		DelaySeconds: 1,
 	}
 
-	if _ , err := d.queue.SendMessage(params); err != nil {
+	if _ , err := d.queue.SendMessage(context.TODO(), params); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (d *SQSDriver) parseMessage(msgs []*sqs.Message) []entity.Message {
+func (d *SQSDriver) parseMessage(msgs []types.Message) []entity.Message {
 	ret := []entity.Message{}
 	for _, m := range msgs {
-		ret = append(ret, &SQSMessage{raw: m})
+		ret = append(ret, &SQSMessage{raw: &m})
 	}
 	return ret
 }
 
 func (d *SQSDriver) GetMessage(num int) ([]entity.Message, error) {
+	log.Print(d.url)
 	params := &sqs.ReceiveMessageInput{
 		QueueUrl: aws.String(d.url),
-		// 一度に取得する最大メッセージ数。最大でも10まで。
-		MaxNumberOfMessages: aws.Int64(int64(num)),
-		// これでキューが空の場合はロングポーリング(20秒間繋ぎっぱなし)になる。
-		WaitTimeSeconds: aws.Int64(20),
-
-		VisibilityTimeout: aws.Int64(60),
+		MaxNumberOfMessages: int32(num),
+		WaitTimeSeconds: 20,
+		VisibilityTimeout: 60,
 	}
-	resp, err := d.queue.ReceiveMessage(params)
+	resp, err := d.queue.ReceiveMessage(context.TODO(),params)
 
 	if err != nil {
 		return nil, err
@@ -82,7 +87,7 @@ func (d *SQSDriver) DeleteMessage(msg entity.DeletableMessage) (error) {
 		QueueUrl:      aws.String(d.url),
 		ReceiptHandle: aws.String(msg.GetDeleteID()),
 	}
-	_, err := d.queue.DeleteMessage(params)
+	_, err := d.queue.DeleteMessage(context.TODO(), params)
 
 	if err != nil {
 		return err
@@ -94,9 +99,9 @@ func (d *SQSDriver) ChangeMessageVisibility(msg entity.ChangeVisibilityMessage) 
 	params := &sqs.ChangeMessageVisibilityInput{
 		QueueUrl:      aws.String(d.url),
 		ReceiptHandle: aws.String(msg.GetChangeVisibilityID()),
-		VisibilityTimeout : aws.Int64(60),
+		VisibilityTimeout : 60,
 	}
-	_, err := d.queue.ChangeMessageVisibility(params)
+	_, err := d.queue.ChangeMessageVisibility(context.TODO(), params)
 
 	if err != nil {
 		return err
@@ -104,9 +109,10 @@ func (d *SQSDriver) ChangeMessageVisibility(msg entity.ChangeVisibilityMessage) 
 	return nil
 }
 
-func NewSQSDriver (q *sqs.SQS, config entity.QueueConfig) *SQSDriver {
+func NewSQSDriver (q *sqs.Client, config *entity.QueueConfig) *SQSDriver {
 	return &SQSDriver{
 		queue: q,
-		url : config.URL,
+		url : config.URL+"/queue/sample",
+		config : config,
 	}
 }

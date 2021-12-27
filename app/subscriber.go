@@ -27,9 +27,13 @@ func (s *Subscriber) Listen() {
 
 	for _, handler := range handlers {
 		queueConfig := handler.GetResultQueueConfig()
-		sessionConfig := handler.GetResultSessionConfig()
+		sessionConfig := handler.GetResultStorageConfig()
 		if queueConfig != nil && sessionConfig != nil{
-			s.dist = append(s.dist, s.factory.CreateWithConfig(*queueConfig,*sessionConfig))
+			f, err := s.factory.CreateWithConfig(*queueConfig,*sessionConfig)
+			if err != nil {
+				log.Fatal(err)
+			}
+			s.dist = append(s.dist, f)
 		} else {
 			s.dist = append(s.dist, s.src)
 		}

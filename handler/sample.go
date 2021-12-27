@@ -16,6 +16,6 @@ func (h SampleHandler) GetResultQueueConfig() *entity.QueueConfig {
 	return nil
 }
 
-func (h SampleHandler) GetResultSessionConfig() *entity.SessionConfig {
+func (h SampleHandler) GetResultStorageConfig() *entity.StorageConfig {
 	return nil
 }

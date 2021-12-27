@@ -1,107 +1,192 @@
 package session
 
 import (
+	"context"
+	"fmt"
 	"github.com/Miyagawa-Ryohei/mkmicro/adapter/gateway"
 	"github.com/Miyagawa-Ryohei/mkmicro/adapter/gateway/driver/queue"
 	"github.com/Miyagawa-Ryohei/mkmicro/adapter/gateway/driver/storage"
 	"github.com/Miyagawa-Ryohei/mkmicro/entity"
-	"github.com/aws/aws-sdk-go/service/sqs"
 	"time"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	awsConfig "github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go-v2/service/sqs"
 )
 
+type CustomEndpointResolver struct{
+	cfg entity.AWSConfig
+}
+
+func (c CustomEndpointResolver) ResolveEndpoint(service, region string, options ...interface{}) (aws.Endpoint, error) {
+	return aws.Endpoint{
+		PartitionID:   "aws",
+		URL:           c.cfg.Endpoint.URL,
+		SigningRegion: c.cfg.Endpoint.Region,
+	}, nil
+}
+
+type CustomCredentialProvider struct{
+	src entity.AWSConfig
+}
+
+func (p CustomCredentialProvider) Retrieve(ctx context.Context) (aws.Credentials, error){
+	return aws.Credentials{
+		AccessKeyID:     p.src.Credential.AccessKey,
+		SecretAccessKey: p.src.Credential.AccessKeySecret,
+		SessionToken:    "",
+		Source:          "",
+		CanExpire:       false,
+		Expires:         time.Time{},
+	}, nil
+}
+
 type STSManager struct{
-	queueConfig entity.QueueConfig
-	sessionConfig entity.SessionConfig
-	sess *session.Session
-	sSess *session.Session
+	queue *entity.QueueDriver
+	queueConfig *entity.QueueConfig
+	storage *entity.StorageDriver
+	storageConfig *entity.StorageConfig
 }
 
 func (s *STSManager) UpdateSession() {
-	if s.sessionConfig.RoleArn == "" {
-		s.sSess = s.sess
-		return
-	}
-	optionProvider := func(p *stscreds.AssumeRoleProvider) {
-		p.Duration = time.Duration(12) * time.Hour
-	}
-	sCreds := stscreds.NewCredentials(s.sess, s.sessionConfig.RoleArn, optionProvider)
-
-	sConfig := &aws.Config{
-		Region: s.sess.Config.Region,
-		Credentials: sCreds,
-	}
-	sSess := session.Must(session.NewSession(sConfig))
-
-	s.sSess = sSess
 }
 
 func (s *STSManager) GetQueue() (entity.QueueDriver, error) {
-	return gateway.NewQueueProxy(s)
+	if s.queue == nil {
+		q, err := s.CreateQueueWithConfig(*s.queueConfig);
+		if err != nil {
+			return nil,err
+		}
+		s.queue = &q
+	}
+	return *s.queue, nil
 }
 
-func (s *STSManager) UpdateQueue() (entity.QueueDriver, error) {
-	d := sqs.New(s.sess)
-	return queue.NewSQSDriver(d, s.queueConfig), nil
+func (s *STSManager) CreateQueueWithConfig(customConfig entity.QueueConfig) (entity.QueueDriver, error) {
+	queueResolver := getResolvers(customConfig.GetAWSConfig())
+	queueCfg, err := awsConfig.LoadDefaultConfig(
+		context.TODO(),
+		queueResolver...,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	client := sqs.NewFromConfig(queueCfg)
+	driver := queue.NewSQSDriver(client,&customConfig)
+	proxy := gateway.NewQueueProxyWithDriverInstance(s,driver)
+
+	return proxy, nil
+}
+
+func (s *STSManager) UpdateQueue(cfg *entity.QueueConfig) (entity.QueueDriver, error) {
+	var client *sqs.Client
+	if cfg != nil {
+		queueResolver := getResolvers(cfg.GetAWSConfig())
+		queueCfg, err := awsConfig.LoadDefaultConfig(
+			context.TODO(),
+			queueResolver...,
+		)
+		if err != nil {
+			return nil, err
+		}
+		client = sqs.NewFromConfig(queueCfg)
+	}
+	driver := queue.NewSQSDriver(client,cfg)
+	return driver, nil
 }
 
 func (s *STSManager) GetStorage() (entity.StorageDriver, error) {
-	return gateway.NewStorageProxy(s)
+	if s.storage == nil {
+		st, err := s.CreateStorageWithConfig(*s.storageConfig);
+		if err != nil {
+			return nil,err
+		}
+		s.storage = &st
+	}
+	return *s.storage, nil
 }
 
-func (s *STSManager) UpdateStorage() (entity.StorageDriver, error) {
-	d := s3.New(s.sSess)
-	return storage.NewS3Driver(d), nil
-}
+func (s *STSManager) CreateStorageWithConfig(customConfig entity.StorageConfig) (entity.StorageDriver, error) {
+	resolver := getResolvers(customConfig.GetAWSConfig())
+	cfg, err := awsConfig.LoadDefaultConfig(
+		context.TODO(),
+		resolver...,
+	)
 
-func newSTSSTSManager (queueConfig entity.QueueConfig, sessionConfig entity.SessionConfig) *STSManager {
-
-	awsConfig := &aws.Config{}
-	if sessionConfig.Endpoint != "" {
-		awsConfig.Endpoint = aws.String(sessionConfig.Endpoint)
-	}
-
-	if sessionConfig.Region == "" {
-		awsConfig.Region = aws.String("ap-northeast-1")
-	} else {
-		awsConfig.Region = aws.String(sessionConfig.Region)
-	}
-
-
-	sess, err := session.NewSession(awsConfig)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
+	client := s3.NewFromConfig(cfg, func(o *s3.Options) {
+		o.UsePathStyle = true
+	})
+	driver := storage.NewS3Driver(client,&customConfig)
+	proxy := gateway.NewStorageProxyWithDriverInstance(s,driver)
 
-	s := &STSManager{
-		queueConfig : queueConfig,
-		sessionConfig : sessionConfig,
-		sess: sess,
+	return proxy, nil
+}
+
+func (s *STSManager) UpdateStorage(cfg *entity.StorageConfig) (entity.StorageDriver, error) {
+	var client *s3.Client
+	if cfg == nil {
+		return nil, fmt.Errorf("update session error( config is nil )")
 	}
-	s.UpdateSession()
-	return s
+	queueResolver := getResolvers(cfg.GetAWSConfig())
+	queueCfg, err := awsConfig.LoadDefaultConfig(
+		context.TODO(),
+		queueResolver...,
+	)
+	if err != nil {
+		return nil, err
+	}
+	client = s3.NewFromConfig(queueCfg)
+	driver := storage.NewS3Driver(client,cfg)
+	return driver, nil
+}
+
+func getResolvers(config entity.AWSConfig) []func(*awsConfig.LoadOptions) error {
+	r := CustomEndpointResolver{
+		cfg : config,
+	}
+	resolvers := []func(*awsConfig.LoadOptions) error{}
+	if config.Profile != nil {
+		resolvers = append(resolvers, awsConfig.WithSharedConfigProfile(config.Profile.Name))
+	} else if config.Credential != nil {
+		p := CustomCredentialProvider{
+			src : config,
+		}
+		resolvers = append(resolvers, awsConfig.WithCredentialsProvider(p))
+	}
+	if config.Endpoint != nil {
+		resolvers = append(resolvers, awsConfig.WithEndpointResolverWithOptions(r))
+	}
+	return resolvers
+}
+
+func newSTSSTSManager (queueConfig entity.QueueConfig, storageConfig entity.StorageConfig) (*STSManager, error) {
+	return &STSManager{
+		queueConfig:   &queueConfig,
+		storageConfig: &storageConfig,
+	}, nil
 }
 
 type STSManagerFactory struct {
 	queue entity.QueueConfig
-	sess entity.SessionConfig
+	storage entity.StorageConfig
 }
 
-func(f STSManagerFactory) Create () entity.SessionManager {
-	return newSTSSTSManager(f.queue, f.sess)
+func(f STSManagerFactory) Create() (entity.SessionManager,error) {
+	return newSTSSTSManager(f.queue, f.storage)
 }
 
-func(f STSManagerFactory) CreateWithConfig(queue entity.QueueConfig, sess entity.SessionConfig) entity.SessionManager {
-	return newSTSSTSManager(queue, sess)
+func(f STSManagerFactory) CreateWithConfig(queue entity.QueueConfig, storage entity.StorageConfig) (entity.SessionManager,error) {
+	return newSTSSTSManager(queue, storage)
 }
 
-func NewSTSManagerFactory(queue entity.QueueConfig, sess entity.SessionConfig) STSManagerFactory {
+func NewSTSManagerFactory(queue entity.QueueConfig, storage entity.StorageConfig) STSManagerFactory {
 	return STSManagerFactory{
 		queue: queue,
-		sess: sess,
+		storage: storage,
 	}
 }

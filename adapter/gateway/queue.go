@@ -9,8 +9,11 @@ type QueueProxy struct {
 	driver entity.QueueDriver
 }
 
+func (q *QueueProxy) GetConfig() *entity.QueueConfig {
+	return q.driver.GetConfig()
+}
 func (q *QueueProxy) Update() {
-	d, err := q.session.UpdateQueue()
+	d, err := q.session.UpdateQueue(q.driver.GetConfig())
 	if err != nil {
 		panic(err)
 	}
@@ -38,7 +41,7 @@ func (q *QueueProxy) ChangeMessageVisibility(msg entity.ChangeVisibilityMessage)
 }
 
 func NewQueueProxy (session entity.QueueSessionUpdater) (entity.QueueDriver, error) {
-	q,err := session.UpdateQueue()
+	q,err := session.UpdateQueue(nil)
 	if err != nil {
 		return nil, err
 	}
@@ -46,4 +49,11 @@ func NewQueueProxy (session entity.QueueSessionUpdater) (entity.QueueDriver, err
 		session: session,
 		driver: q,
 	}, nil
+}
+
+func NewQueueProxyWithDriverInstance (session entity.QueueSessionUpdater, q entity.QueueDriver) entity.QueueDriver {
+	return &QueueProxy{
+		session: session,
+		driver: q,
+	}
 }
