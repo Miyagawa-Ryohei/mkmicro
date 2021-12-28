@@ -2,6 +2,8 @@ package entity
 
 type SessionManager interface {
 	UpdateSession()
+	CreateStorageWithConfig(customConfig StorageConfig) (StorageDriver, error)
+	CreateQueueWithConfig(customConfig QueueConfig) (QueueDriver, error)
 	GetQueue() (QueueDriver, error)
 	GetStorage() (StorageDriver, error)
 	QueueSessionUpdater

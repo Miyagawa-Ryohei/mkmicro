@@ -140,7 +140,9 @@ func (s *STSManager) UpdateStorage(cfg *entity.StorageConfig) (entity.StorageDri
 	if err != nil {
 		return nil, err
 	}
-	client = s3.NewFromConfig(queueCfg)
+	client = s3.NewFromConfig(queueCfg, func(o *s3.Options) {
+		o.UsePathStyle = true
+	})
 	driver := storage.NewS3Driver(client,cfg)
 	return driver, nil
 }
