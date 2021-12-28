@@ -3,7 +3,6 @@ package storage
 import (
 	"bytes"
 	"context"
-	"fmt"
 	"github.com/Miyagawa-Ryohei/mkmicro/entity"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
@@ -23,17 +22,6 @@ func (d *S3Driver) Put(bucket string, key string, data []byte) (error) {
 		Key : aws.String(key),
 		Body : bytes.NewReader(data),
 		ContentLength: int64(len(data)),
-		ContentType:   aws.String("plain/text"),
-	}
-
-	fmt.Printf("%+v",*param)
-	lsParam := &s3.ListBucketsInput{}
-	resps, err := d.s3.ListBuckets(context.TODO(), lsParam)
-	for _,b := range resps.Buckets {
-		fmt.Printf("%s\n", *b.Name)
-	}
-	if err != nil {
-		return err
 	}
 
 	if _, err := d.s3.PutObject(context.TODO(), param); err != nil {
