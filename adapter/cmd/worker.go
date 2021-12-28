@@ -7,7 +7,6 @@ import (
 	"github.com/Miyagawa-Ryohei/mkmicro/infra"
 	"github.com/spf13/cobra"
 	"log"
-	"os"
 )
 
 var WorkerCmd = entity.WorkerCommand{
@@ -22,11 +21,7 @@ var WorkerCmd = entity.WorkerCommand{
 }
 
 func GetSubscriber () *app.Subscriber {
-	name := os.Getenv("MK_CONFIG_NAME")
-	dir := os.Getenv("MK_CONFIG_DIR")
 	configLoader := infra.ConfigLoader{
-		Name: &name,
-		Dir: &dir,
 	}
 	config := new(entity.Config)
 	configLoader.Load(config)
