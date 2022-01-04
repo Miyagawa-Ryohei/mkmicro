@@ -2,20 +2,20 @@ package handler
 
 import (
 	"fmt"
-	"github.com/Miyagawa-Ryohei/mkmicro/entity"
+	"github.com/Miyagawa-Ryohei/mkmicro/types"
 )
 
-type SampleHandler struct {}
+type SampleHandler struct{}
 
-func (h SampleHandler) Exec(msg entity.Message, dist entity.SessionManager) error {
-	fmt.Printf("%s",msg.GetBody())
+func (h SampleHandler) Exec(msg types.Message, dist types.SessionManager) error {
+	fmt.Printf("%s", msg.GetBody())
 	return nil
 }
 
-func (h SampleHandler) GetResultQueueConfig() *entity.QueueConfig {
+func (h SampleHandler) GetResultQueueConfig() *types.QueueConfig {
 	return nil
 }
 
-func (h SampleHandler) GetResultStorageConfig() *entity.StorageConfig {
+func (h SampleHandler) GetResultStorageConfig() *types.StorageConfig {
 	return nil
 }

@@ -1,6 +1,6 @@
-package entity
+package types
 
-type Message interface{
+type Message interface {
 	DeletableMessage
 	ChangeVisibilityMessage
 	GetBody() []byte

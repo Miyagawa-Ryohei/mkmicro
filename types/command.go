@@ -1,4 +1,4 @@
-package entity
+package types
 
 import "github.com/spf13/cobra"
 
@@ -7,6 +7,6 @@ type WorkerCommand struct {
 	Handler func(Message) []byte
 }
 
-func(c *WorkerCommand) SetHandler(handler func(Message) []byte) {
+func (c *WorkerCommand) SetHandler(handler func(Message) []byte) {
 	c.Handler = handler
 }

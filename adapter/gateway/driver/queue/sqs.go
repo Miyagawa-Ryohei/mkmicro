@@ -3,10 +3,10 @@ package queue
 import (
 	"bytes"
 	"context"
-	"github.com/Miyagawa-Ryohei/mkmicro/entity"
+	"github.com/Miyagawa-Ryohei/mkmicro/types"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
-	"github.com/aws/aws-sdk-go-v2/service/sqs/types"
+	awsTypes "github.com/aws/aws-sdk-go-v2/service/sqs/types"
 	"log"
 )
 
@@ -15,13 +15,13 @@ type SQSConfig struct {
 }
 
 type SQSDriver struct {
-	url  string
-	queue *sqs.Client
-	config *entity.QueueConfig
+	url    string
+	queue  *sqs.Client
+	config *types.QueueConfig
 }
 
 type SQSMessage struct {
-	raw *types.Message
+	raw *awsTypes.Message
 }
 
 func (m *SQSMessage) GetBody() []byte {
@@ -36,10 +36,10 @@ func (m *SQSMessage) GetDeleteID() string {
 	return *m.raw.ReceiptHandle
 }
 
-func (d *SQSDriver) GetConfig() *entity.QueueConfig {
+func (d *SQSDriver) GetConfig() *types.QueueConfig {
 	return d.config
 }
-func (d *SQSDriver) PutMessage(raw []byte) (error) {
+func (d *SQSDriver) PutMessage(raw []byte) error {
 
 	params := &sqs.SendMessageInput{
 		MessageBody:  aws.String(string(raw)),
@@ -47,29 +47,29 @@ func (d *SQSDriver) PutMessage(raw []byte) (error) {
 		DelaySeconds: 1,
 	}
 
-	if _ , err := d.queue.SendMessage(context.TODO(), params); err != nil {
+	if _, err := d.queue.SendMessage(context.TODO(), params); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (d *SQSDriver) parseMessage(msgs []types.Message) []entity.Message {
-	ret := []entity.Message{}
+func (d *SQSDriver) parseMessage(msgs []awsTypes.Message) []types.Message {
+	ret := []types.Message{}
 	for _, m := range msgs {
 		ret = append(ret, &SQSMessage{raw: &m})
 	}
 	return ret
 }
 
-func (d *SQSDriver) GetMessage(num int) ([]entity.Message, error) {
+func (d *SQSDriver) GetMessage(num int) ([]types.Message, error) {
 	log.Print(d.url)
 	params := &sqs.ReceiveMessageInput{
-		QueueUrl: aws.String(d.url),
+		QueueUrl:            aws.String(d.url),
 		MaxNumberOfMessages: int32(num),
-		WaitTimeSeconds: 20,
-		VisibilityTimeout: 60,
+		WaitTimeSeconds:     20,
+		VisibilityTimeout:   60,
 	}
-	resp, err := d.queue.ReceiveMessage(context.TODO(),params)
+	resp, err := d.queue.ReceiveMessage(context.TODO(), params)
 
 	if err != nil {
 		return nil, err
@@ -82,7 +82,7 @@ func (d *SQSDriver) GetMessage(num int) ([]entity.Message, error) {
 	return d.parseMessage(resp.Messages), nil
 }
 
-func (d *SQSDriver) DeleteMessage(msg entity.DeletableMessage) (error) {
+func (d *SQSDriver) DeleteMessage(msg types.DeletableMessage) error {
 	params := &sqs.DeleteMessageInput{
 		QueueUrl:      aws.String(d.url),
 		ReceiptHandle: aws.String(msg.GetDeleteID()),
@@ -95,11 +95,11 @@ func (d *SQSDriver) DeleteMessage(msg entity.DeletableMessage) (error) {
 	return nil
 }
 
-func (d *SQSDriver) ChangeMessageVisibility(msg entity.ChangeVisibilityMessage) (error) {
+func (d *SQSDriver) ChangeMessageVisibility(msg types.ChangeVisibilityMessage) error {
 	params := &sqs.ChangeMessageVisibilityInput{
-		QueueUrl:      aws.String(d.url),
-		ReceiptHandle: aws.String(msg.GetChangeVisibilityID()),
-		VisibilityTimeout : 60,
+		QueueUrl:          aws.String(d.url),
+		ReceiptHandle:     aws.String(msg.GetChangeVisibilityID()),
+		VisibilityTimeout: 60,
 	}
 	_, err := d.queue.ChangeMessageVisibility(context.TODO(), params)
 
@@ -109,10 +109,10 @@ func (d *SQSDriver) ChangeMessageVisibility(msg entity.ChangeVisibilityMessage) 
 	return nil
 }
 
-func NewSQSDriver (q *sqs.Client, config *entity.QueueConfig) *SQSDriver {
+func NewSQSDriver(q *sqs.Client, config *types.QueueConfig) *SQSDriver {
 	return &SQSDriver{
-		queue: q,
-		url : config.URL,
-		config : config,
+		queue:  q,
+		url:    config.URL,
+		config: config,
 	}
 }

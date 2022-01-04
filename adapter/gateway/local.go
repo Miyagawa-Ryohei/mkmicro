@@ -7,21 +7,19 @@ import (
 )
 
 type LocalFileSystem struct {
-
 }
 
-func(r *LocalFileSystem) tempDir() string {
-	return 	os.TempDir()
+func (r *LocalFileSystem) tempDir() string {
+	return os.TempDir()
 }
 
-
-func(r *LocalFileSystem) Read(name string) (*os.File, error) {
-	abs := path.Join(r.tempDir(),name)
+func (r *LocalFileSystem) Read(name string) (*os.File, error) {
+	abs := path.Join(r.tempDir(), name)
 	return os.Open(abs)
 }
 
-func(r *LocalFileSystem) Write(name string, obj io.Reader) error {
-	abs := path.Join(r.tempDir(),name)
+func (r *LocalFileSystem) Write(name string, obj io.Reader) error {
+	abs := path.Join(r.tempDir(), name)
 	buf := []byte{}
 	n, err := obj.Read(buf)
 	if err != nil {
@@ -30,9 +28,8 @@ func(r *LocalFileSystem) Write(name string, obj io.Reader) error {
 	if n == 0 {
 		return nil
 	}
-	if err := os.WriteFile(abs, buf,755); err != nil {
+	if err := os.WriteFile(abs, buf, 755); err != nil {
 		return err
 	}
 	return nil
 }
-

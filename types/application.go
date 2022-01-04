@@ -1,4 +1,4 @@
-package entity
+package types
 
 type Application interface {
 	PushResultMessage(result []byte)

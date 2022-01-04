@@ -1,15 +1,15 @@
 package gateway
 
 import (
-	"github.com/Miyagawa-Ryohei/mkmicro/entity"
+	"github.com/Miyagawa-Ryohei/mkmicro/types"
 )
 
 type StorageProxy struct {
-	session entity.StorageSessionUpdater
-	driver  entity.StorageDriver
+	session types.StorageSessionUpdater
+	driver  types.StorageDriver
 }
 
-func (d *StorageProxy) GetConfig() *entity.StorageConfig {
+func (d *StorageProxy) GetConfig() *types.StorageConfig {
 	return d.driver.GetConfig()
 }
 func (d *StorageProxy) Update() {
@@ -20,14 +20,14 @@ func (d *StorageProxy) Update() {
 	d.driver = driver
 }
 
-func (d *StorageProxy) Get(root string, path string) ([]byte, error){
-	return d.driver.Get(root,path)
+func (d *StorageProxy) Get(root string, path string) ([]byte, error) {
+	return d.driver.Get(root, path)
 }
-func (d *StorageProxy) Put(root string, path string, raw []byte) error{
-	return d.driver.Put(root,path,raw)
+func (d *StorageProxy) Put(root string, path string, raw []byte) error {
+	return d.driver.Put(root, path, raw)
 }
 
-func NewStorageProxy(session entity.StorageSessionUpdater) (entity.StorageDriver, error) {
+func NewStorageProxy(session types.StorageSessionUpdater) (types.StorageDriver, error) {
 	d, err := session.UpdateStorage(nil)
 	if err != nil {
 		return nil, err
@@ -38,9 +38,9 @@ func NewStorageProxy(session entity.StorageSessionUpdater) (entity.StorageDriver
 	}, nil
 }
 
-func NewStorageProxyWithDriverInstance (session entity.StorageSessionUpdater, s entity.StorageDriver) entity.StorageDriver {
+func NewStorageProxyWithDriverInstance(session types.StorageSessionUpdater, s types.StorageDriver) types.StorageDriver {
 	return &StorageProxy{
 		session: session,
-		driver: s,
+		driver:  s,
 	}
 }

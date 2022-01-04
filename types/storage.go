@@ -1,4 +1,4 @@
-package entity
+package types
 
 type StorageDriver interface {
 	GetConfig() *StorageConfig

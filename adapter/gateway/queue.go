@@ -1,15 +1,15 @@
 package gateway
 
 import (
-	"github.com/Miyagawa-Ryohei/mkmicro/entity"
+	"github.com/Miyagawa-Ryohei/mkmicro/types"
 )
 
 type QueueProxy struct {
-	session entity.QueueSessionUpdater
-	driver entity.QueueDriver
+	session types.QueueSessionUpdater
+	driver  types.QueueDriver
 }
 
-func (q *QueueProxy) GetConfig() *entity.QueueConfig {
+func (q *QueueProxy) GetConfig() *types.QueueConfig {
 	return q.driver.GetConfig()
 }
 func (q *QueueProxy) Update() {
@@ -20,7 +20,7 @@ func (q *QueueProxy) Update() {
 	q.driver = d
 }
 
-func (q *QueueProxy) GetMessage(num int) ([]entity.Message, error){
+func (q *QueueProxy) GetMessage(num int) ([]types.Message, error) {
 	resp, err := q.driver.GetMessage(num)
 	if err != nil {
 		return nil, err
@@ -28,32 +28,32 @@ func (q *QueueProxy) GetMessage(num int) ([]entity.Message, error){
 	return resp, err
 }
 
-func (q *QueueProxy) PutMessage(raw []byte) (error) {
+func (q *QueueProxy) PutMessage(raw []byte) error {
 	return q.driver.PutMessage(raw)
 }
 
-func (q *QueueProxy) DeleteMessage(msg entity.DeletableMessage) (error){
+func (q *QueueProxy) DeleteMessage(msg types.DeletableMessage) error {
 	return q.driver.DeleteMessage(msg)
 }
 
-func (q *QueueProxy) ChangeMessageVisibility(msg entity.ChangeVisibilityMessage) (error){
+func (q *QueueProxy) ChangeMessageVisibility(msg types.ChangeVisibilityMessage) error {
 	return q.driver.ChangeMessageVisibility(msg)
 }
 
-func NewQueueProxy (session entity.QueueSessionUpdater) (entity.QueueDriver, error) {
-	q,err := session.UpdateQueue(nil)
+func NewQueueProxy(session types.QueueSessionUpdater) (types.QueueDriver, error) {
+	q, err := session.UpdateQueue(nil)
 	if err != nil {
 		return nil, err
 	}
 	return &QueueProxy{
 		session: session,
-		driver: q,
+		driver:  q,
 	}, nil
 }
 
-func NewQueueProxyWithDriverInstance (session entity.QueueSessionUpdater, q entity.QueueDriver) entity.QueueDriver {
+func NewQueueProxyWithDriverInstance(session types.QueueSessionUpdater, q types.QueueDriver) types.QueueDriver {
 	return &QueueProxy{
 		session: session,
-		driver: q,
+		driver:  q,
 	}
 }

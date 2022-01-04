@@ -1,4 +1,4 @@
-package entity
+package types
 
 type SessionManager interface {
 	UpdateSession()
