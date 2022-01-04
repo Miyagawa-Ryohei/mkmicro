@@ -55,35 +55,19 @@ func (l *logger) Print(logLevel types.LogLevel, msg string) {
 	l.buf <- fmt.Sprintf("%s[%s][%s][%s:%d][%s][%s] %s\x1b[0m", color, tag, time.Now().Format(time.RFC3339), filename, line, funcName, logLevel.String(), msg)
 }
 
-func (l *logger) Info(msg string) {
-	l.Print(types.INFO, msg)
-}
-
-func (l *logger) Infof(format string, binder ...interface{}) {
+func (l *logger) Info(format string, binder ...interface{}) {
 	l.Print(types.INFO, fmt.Sprintf(format, binder...))
 }
 
-func (l *logger) Debug(msg string) {
-	l.Print(types.DEBUG, msg)
-}
-
-func (l *logger) Debugf(format string, binder ...interface{}) {
+func (l *logger) Debug(format string, binder ...interface{}) {
 	l.Print(types.DEBUG, fmt.Sprintf(format, binder...))
 }
 
-func (l *logger) Warn(msg string) {
-	l.Print(types.WARN, msg)
-}
-
-func (l *logger) Warnf(format string, binder ...interface{}) {
+func (l *logger) Warn(format string, binder ...interface{}) {
 	l.Print(types.WARN, fmt.Sprintf(format, binder...))
 }
 
-func (l *logger) Error(msg string) {
-	l.Print(types.ERROR, msg)
-}
-
-func (l *logger) Errorf(format string, binder ...interface{}) {
+func (l *logger) Error(format string, binder ...interface{}) {
 	l.Print(types.ERROR, fmt.Sprintf(format, binder...))
 }
 
