@@ -19,11 +19,11 @@ func (s *Subscriber) Listen() {
 
 	c := container.GetHandlerContainer()
 	handlers := c.Get()
-	s.log.Debugf("%d handler is found", len(handlers))
+	s.log.Debug("%d handler is found", len(handlers))
 	s.log.Info("start subscribe")
 	queue, err := s.src.GetQueue()
 	if err != nil {
-		s.log.Errorf("%d handler is found", len(handlers))
+		s.log.Error("%d handler is found", len(handlers))
 		panic(err)
 	}
 
@@ -34,10 +34,10 @@ func (s *Subscriber) Listen() {
 			continue
 		}
 		if len(messages) == 0 {
-			s.log.Info("message queue is empty")
+			s.log.Info("message queue is empty, re-polling after 10 second")
 			time.Sleep(10 * time.Second)
 		}
-		s.log.Debugf("%d message is received", len(messages))
+		s.log.Debug("%d message is received", len(messages))
 		wg := &sync.WaitGroup{}
 		for _, m := range messages {
 			wg.Add(1)
@@ -46,10 +46,13 @@ func (s *Subscriber) Listen() {
 				for {
 					select {
 					case result := <-ch:
+						s.log.Debug("[%s]get all worker done signal", target.GetDeleteID())
 						if result {
+							s.log.Debug("[%s] message deleting...", target.GetDeleteID())
 							if err := queue.DeleteMessage(target); err != nil {
 								s.log.Error(err.Error())
 							}
+							s.log.Debug("[%s] message has been deleted", target.GetDeleteID())
 						}
 						close(ch)
 						return
@@ -57,24 +60,31 @@ func (s *Subscriber) Listen() {
 						if err := queue.ChangeMessageVisibility(target); err != nil {
 							s.log.Error(err.Error())
 						}
+						time.Sleep(40 * time.Second)
 					}
 				}
 			}(m, ch)
 
 			go func(target types.Message, ch chan bool) {
-				s.log.Debugf("[%s] worker start", target.GetDeleteID())
+				s.log.Debug("[%s] worker start", target.GetDeleteID())
 				result := true
+				start := time.Now()
 				for _, handler := range handlers {
 					if err := handler.Exec(target, s.src); err != nil {
+						s.log.Info("[%s]handler returns some error. stop change visibility for retry", target.GetDeleteID())
 						s.log.Error(err.Error())
 						result = false
 					}
+					s.log.Info("[%s]all handler returns no errors. message is processed correctly", target.GetDeleteID())
+					s.log.Debug("[%s]worker takes %d msec", target.GetDeleteID(), (time.Now().UnixNano()-start.UnixNano()) * int64(time.Millisecond))
 				}
+				s.log.Debug("[%s]all worker takes %d msec", target.GetDeleteID(), (time.Now().UnixNano()-start.UnixNano()) * int64(time.Millisecond))
+				s.log.Info("[%s] all worker end", target.GetDeleteID())
 				ch <- result
-				s.log.Debugf("[%s] all worker end", target.GetDeleteID())
 				wg.Done()
 			}(m, ch)
 		}
+		s.log.Info("[subscriber main] wait for processing messages")
 		wg.Wait()
 	}
 }
