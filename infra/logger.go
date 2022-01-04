@@ -15,30 +15,6 @@ type logger struct {
 	wg  *sync.WaitGroup
 }
 
-type LogLevel int
-
-const (
-	DEBUG LogLevel = iota
-	INFO
-	WARN
-	ERROR
-)
-
-func (l LogLevel) String() string {
-	switch l {
-	case DEBUG:
-		return "DEBUG"
-	case INFO:
-		return "INFO"
-	case WARN:
-		return "WARN"
-	case ERROR:
-		return "ERROR"
-	default:
-		return "UNKNOWN"
-	}
-}
-
 func (l *logger) getCaller() (filename string, funcName string, line int) {
 	filename = ""
 	pt, file, line, ok := runtime.Caller(3)
@@ -54,22 +30,22 @@ func (l *logger) getCaller() (filename string, funcName string, line int) {
 	return
 }
 
-func (l *logger) getColorFormat(logLevel LogLevel) string {
+func (l *logger) getColorFormat(logLevel types.LogLevel) string {
 	switch logLevel {
-	case DEBUG:
+	case types.DEBUG:
 		return "\x1b[32m"
-	case INFO:
+	case types.INFO:
 		return "\x1b[34m"
-	case WARN:
+	case types.WARN:
 		return "\x1b[33m"
-	case ERROR:
+	case types.ERROR:
 		return "\x1b[31m"
 	default:
 		return "\x1b[30m"
 	}
 }
 
-func (l *logger) Print(logLevel LogLevel, msg string) {
+func (l *logger) Print(logLevel types.LogLevel, msg string) {
 	filename, funcName, line := l.getCaller()
 	color := l.getColorFormat(logLevel)
 	tag := os.Getenv("LOG_TAG")
@@ -80,35 +56,35 @@ func (l *logger) Print(logLevel LogLevel, msg string) {
 }
 
 func (l *logger) Info(msg string) {
-	l.Print(INFO, msg)
+	l.Print(types.INFO, msg)
 }
 
 func (l *logger) Infof(format string, binder ...interface{}) {
-	l.Print(INFO, fmt.Sprintf(format, binder...))
+	l.Print(types.INFO, fmt.Sprintf(format, binder...))
 }
 
 func (l *logger) Debug(msg string) {
-	l.Print(DEBUG, msg)
+	l.Print(types.DEBUG, msg)
 }
 
 func (l *logger) Debugf(format string, binder ...interface{}) {
-	l.Print(DEBUG, fmt.Sprintf(format, binder...))
+	l.Print(types.DEBUG, fmt.Sprintf(format, binder...))
 }
 
 func (l *logger) Warn(msg string) {
-	l.Print(WARN, msg)
+	l.Print(types.WARN, msg)
 }
 
 func (l *logger) Warnf(format string, binder ...interface{}) {
-	l.Print(WARN, fmt.Sprintf(format, binder...))
+	l.Print(types.WARN, fmt.Sprintf(format, binder...))
 }
 
 func (l *logger) Error(msg string) {
-	l.Print(ERROR, msg)
+	l.Print(types.ERROR, msg)
 }
 
 func (l *logger) Errorf(format string, binder ...interface{}) {
-	l.Print(ERROR, fmt.Sprintf(format, binder...))
+	l.Print(types.ERROR, fmt.Sprintf(format, binder...))
 }
 
 func (l *logger) Flush() {
