@@ -7,7 +7,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
 	awsTypes "github.com/aws/aws-sdk-go-v2/service/sqs/types"
-	"log"
 )
 
 type SQSConfig struct {
@@ -62,7 +61,6 @@ func (d *SQSDriver) parseMessage(msgs []awsTypes.Message) []types.Message {
 }
 
 func (d *SQSDriver) GetMessage(num int) ([]types.Message, error) {
-	log.Print(d.url)
 	params := &sqs.ReceiveMessageInput{
 		QueueUrl:            aws.String(d.url),
 		MaxNumberOfMessages: int32(num),
