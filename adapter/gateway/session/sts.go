@@ -24,6 +24,7 @@ func (c CustomEndpointResolver) ResolveEndpoint(service, region string, options 
 		PartitionID:   "aws",
 		URL:           c.cfg.Endpoint.URL,
 		SigningRegion: c.cfg.Endpoint.Region,
+		SigningMethod: "s3v4",
 	}, nil
 }
 
@@ -132,15 +133,15 @@ func (s *STSManager) UpdateStorage(cfg *types.StorageConfig) (types.StorageDrive
 	if cfg == nil {
 		return nil, fmt.Errorf("update session error( config is nil )")
 	}
-	queueResolver := getResolvers(cfg.GetAWSConfig())
-	queueCfg, err := awsConfig.LoadDefaultConfig(
+	storageResolver := getResolvers(cfg.GetAWSConfig())
+	storageCfg, err := awsConfig.LoadDefaultConfig(
 		context.TODO(),
-		queueResolver...,
+		storageResolver...,
 	)
 	if err != nil {
 		return nil, err
 	}
-	client = s3.NewFromConfig(queueCfg, func(o *s3.Options) {
+	client = s3.NewFromConfig(storageCfg, func(o *s3.Options) {
 		o.UsePathStyle = true
 	})
 	driver := storage.NewS3Driver(client, cfg)
@@ -158,7 +159,7 @@ func getResolvers(config types.AWSConfig) []func(*awsConfig.LoadOptions) error {
 		p := CustomCredentialProvider{
 			src: config,
 		}
-		resolvers = append(resolvers, awsConfig.WithCredentialsProvider(p))
+		resolvers = append(resolvers, awsConfig.WithCredentialsProvider(p), awsConfig())
 	}
 	if config.Endpoint != nil {
 		resolvers = append(resolvers, awsConfig.WithEndpointResolverWithOptions(r))
