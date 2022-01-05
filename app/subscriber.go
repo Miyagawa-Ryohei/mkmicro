@@ -43,24 +43,28 @@ func (s *Subscriber) Listen() {
 		for _, m := range messages {
 			mu := &sync.Mutex{}
 			wg.Add(1)
-			go func(target types.Message, mu *sync.Mutex) {
+			done := new(bool)
+			*done = false
+			go func(target types.Message, mu *sync.Mutex, done *bool) {
 				defer mu.Unlock()
 				for {
 					mu.Lock()
+					if *done {
+						return
+					}
 					if !(target.IsDeleted()) {
 						if err := queue.ChangeMessageVisibility(target); err != nil {
 							s.log.Error(err.Error())
 						}
 						mu.Unlock()
 					} else {
-						mu.Unlock()
 						return
 					}
 					time.Sleep(40 * time.Second)
 				}
-			}(m, mu)
+			}(m, mu, done)
 
-			go func(target types.Message, mu *sync.Mutex) {
+			go func(target types.Message, mu *sync.Mutex, done *bool) {
 				defer func() {
 					wg.Done()
 				}()
@@ -78,15 +82,16 @@ func (s *Subscriber) Listen() {
 				}
 				s.log.Debug("[%s]all worker takes %d msec", target.GetDeleteID(), (time.Now().UnixNano()-start.UnixNano())/int64(time.Millisecond))
 				s.log.Info("[%s] all worker end", target.GetDeleteID())
+				mu.Lock()
+				defer mu.Unlock()
+				*done = true
 				if result {
-					mu.Lock()
 					if err := queue.DeleteMessage(target); err != nil {
 						s.log.Error(err.Error())
 					}
 					target.SetDeleted(true)
-					mu.Unlock()
 				}
-			}(m, mu)
+			}(m, mu, done)
 		}
 		s.log.Info("[subscriber main] wait for processing messages")
 		wg.Wait()
