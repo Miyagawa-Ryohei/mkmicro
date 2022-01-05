@@ -67,10 +67,6 @@ func (s *Subscriber) Listen() {
 
 			go func(target types.Message, ch chan bool) {
 				defer func(){
-					err := recover()
-					if err != nil {
-						s.log.Error("%s",err)
-					}
 					wg.Done()
 				}()
 				s.log.Debug("[%s] worker start", target.GetDeleteID())
