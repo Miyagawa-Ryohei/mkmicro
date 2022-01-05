@@ -20,7 +20,8 @@ type SQSDriver struct {
 }
 
 type SQSMessage struct {
-	raw *awsTypes.Message
+	raw     *awsTypes.Message
+	deleted bool
 }
 
 func (m *SQSMessage) GetBody() []byte {
@@ -33,6 +34,14 @@ func (m *SQSMessage) GetChangeVisibilityID() string {
 
 func (m *SQSMessage) GetDeleteID() string {
 	return *m.raw.ReceiptHandle
+}
+
+func (m *SQSMessage) SetDeleted(deleted bool) {
+	m.deleted = deleted
+}
+
+func (m *SQSMessage) IsDeleted() bool {
+	return m.deleted
 }
 
 func (d *SQSDriver) GetConfig() *types.QueueConfig {
@@ -55,7 +64,10 @@ func (d *SQSDriver) PutMessage(raw []byte) error {
 func (d *SQSDriver) parseMessage(msgs []awsTypes.Message) []types.Message {
 	ret := []types.Message{}
 	for _, m := range msgs {
-		ret = append(ret, &SQSMessage{raw: &m})
+		ret = append(ret, &SQSMessage{
+			raw:     &m,
+			deleted: false,
+		})
 	}
 	return ret
 }
@@ -86,6 +98,7 @@ func (d *SQSDriver) DeleteMessage(msg types.DeletableMessage) error {
 		ReceiptHandle: aws.String(msg.GetDeleteID()),
 	}
 	_, err := d.queue.DeleteMessage(context.TODO(), params)
+	msg.SetDeleted(true)
 
 	if err != nil {
 		return err

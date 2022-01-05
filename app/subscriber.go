@@ -22,6 +22,7 @@ func (s *Subscriber) Listen() {
 	s.log.Debug("%d handler is found", len(handlers))
 	s.log.Info("start subscribe")
 	queue, err := s.src.GetQueue()
+
 	if err != nil {
 		s.log.Error("%d handler is found", len(handlers))
 		panic(err)
@@ -40,33 +41,27 @@ func (s *Subscriber) Listen() {
 		s.log.Debug("%d message is received", len(messages))
 		wg := &sync.WaitGroup{}
 		for _, m := range messages {
+			mu := &sync.Mutex{}
 			wg.Add(1)
-			ch := make(chan bool)
-			go func(target types.Message, ch chan bool) {
+			go func(target types.Message, mu *sync.Mutex) {
+				defer mu.Unlock()
 				for {
-					select {
-					case result := <-ch:
-						s.log.Debug("[%s]get all worker done signal", target.GetDeleteID())
-						if result {
-							s.log.Debug("[%s] message deleting...", target.GetDeleteID())
-							if err := queue.DeleteMessage(target); err != nil {
-								s.log.Error(err.Error())
-							}
-							s.log.Debug("[%s] message has been deleted", target.GetDeleteID())
-						}
-						close(ch)
-						return
-					default:
+					mu.Lock()
+					if !(target.IsDeleted()) {
 						if err := queue.ChangeMessageVisibility(target); err != nil {
 							s.log.Error(err.Error())
 						}
-						time.Sleep(40 * time.Second)
+						mu.Unlock()
+					} else {
+						mu.Unlock()
+						return
 					}
+					time.Sleep(40 * time.Second)
 				}
-			}(m, ch)
+			}(m, mu)
 
-			go func(target types.Message, ch chan bool) {
-				defer func(){
+			go func(target types.Message, mu *sync.Mutex) {
+				defer func() {
 					wg.Done()
 				}()
 				s.log.Debug("[%s] worker start", target.GetDeleteID())
@@ -79,12 +74,19 @@ func (s *Subscriber) Listen() {
 						result = false
 					}
 					s.log.Info("[%s]all handler returns no errors. message is processed correctly", target.GetDeleteID())
-					s.log.Debug("[%s]worker takes %d msec", target.GetDeleteID(), (time.Now().UnixNano()-start.UnixNano()) / int64(time.Millisecond))
+					s.log.Debug("[%s]worker takes %d msec", target.GetDeleteID(), (time.Now().UnixNano()-start.UnixNano())/int64(time.Millisecond))
 				}
-				s.log.Debug("[%s]all worker takes %d msec", target.GetDeleteID(), (time.Now().UnixNano()-start.UnixNano()) / int64(time.Millisecond))
+				s.log.Debug("[%s]all worker takes %d msec", target.GetDeleteID(), (time.Now().UnixNano()-start.UnixNano())/int64(time.Millisecond))
 				s.log.Info("[%s] all worker end", target.GetDeleteID())
-				ch <- result
-			}(m, ch)
+				if result {
+					mu.Lock()
+					if err := queue.DeleteMessage(target); err != nil {
+						s.log.Error(err.Error())
+					}
+					target.SetDeleted(true)
+					mu.Unlock()
+				}
+			}(m, mu)
 		}
 		s.log.Info("[subscriber main] wait for processing messages")
 		wg.Wait()

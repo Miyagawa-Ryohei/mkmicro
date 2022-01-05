@@ -8,6 +8,8 @@ type Message interface {
 
 type DeletableMessage interface {
 	GetDeleteID() string
+	IsDeleted() bool
+	SetDeleted(deleted bool)
 }
 
 type ChangeVisibilityMessage interface {

@@ -8,7 +8,6 @@ type Logger interface {
 	Flush()
 }
 
-
 type LogLevel int
 
 const (
