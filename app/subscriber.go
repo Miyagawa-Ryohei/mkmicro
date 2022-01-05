@@ -66,6 +66,13 @@ func (s *Subscriber) Listen() {
 			}(m, ch)
 
 			go func(target types.Message, ch chan bool) {
+				defer func(){
+					err := recover()
+					if err != nil {
+						s.log.Error("%s",err)
+					}
+					wg.Done()
+				}()
 				s.log.Debug("[%s] worker start", target.GetDeleteID())
 				result := true
 				start := time.Now()
@@ -76,12 +83,11 @@ func (s *Subscriber) Listen() {
 						result = false
 					}
 					s.log.Info("[%s]all handler returns no errors. message is processed correctly", target.GetDeleteID())
-					s.log.Debug("[%s]worker takes %d msec", target.GetDeleteID(), (time.Now().UnixNano()-start.UnixNano()) * int64(time.Millisecond))
+					s.log.Debug("[%s]worker takes %d msec", target.GetDeleteID(), (time.Now().UnixNano()-start.UnixNano()) / int64(time.Millisecond))
 				}
-				s.log.Debug("[%s]all worker takes %d msec", target.GetDeleteID(), (time.Now().UnixNano()-start.UnixNano()) * int64(time.Millisecond))
+				s.log.Debug("[%s]all worker takes %d msec", target.GetDeleteID(), (time.Now().UnixNano()-start.UnixNano()) / int64(time.Millisecond))
 				s.log.Info("[%s] all worker end", target.GetDeleteID())
 				ch <- result
-				wg.Done()
 			}(m, ch)
 		}
 		s.log.Info("[subscriber main] wait for processing messages")
