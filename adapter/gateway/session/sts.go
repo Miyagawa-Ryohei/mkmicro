@@ -159,7 +159,7 @@ func getResolvers(config types.AWSConfig) []func(*awsConfig.LoadOptions) error {
 		p := CustomCredentialProvider{
 			src: config,
 		}
-		resolvers = append(resolvers, awsConfig.WithCredentialsProvider(p), awsConfig())
+		resolvers = append(resolvers, awsConfig.WithCredentialsProvider(p))
 	}
 	if config.Endpoint != nil {
 		resolvers = append(resolvers, awsConfig.WithEndpointResolverWithOptions(r))
