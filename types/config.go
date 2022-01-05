@@ -6,14 +6,14 @@ type EndPoint struct {
 }
 
 type Credential struct {
-	AccessKey       string
-	AccessKeySecret string
+	AccessKey       string `mapstructure:"access_key,omitempty"`
+	AccessKeySecret string `mapstructure:"access_key_secret,omitempty"`
 }
 
 type Profile struct {
-	Name       string
-	Role       string
-	AssumeRole string
+	Name       string `mapstructure:"name,omitempty"`
+	Role       string `mapstructure:"role,omitempty"`
+	AssumeRole string `mapstructure:"assume_role,omitempty"`
 }
 
 type AWSConfig struct {
