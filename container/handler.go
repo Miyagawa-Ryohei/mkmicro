@@ -2,23 +2,23 @@ package container
 
 import "github.com/Miyagawa-Ryohei/mkmicro/types"
 
-type handlerContainer struct {
+type HandlerContainer struct {
 	handlers []types.Handler
 }
 
-var container *handlerContainer = nil
+var container *HandlerContainer = nil
 
-func (c *handlerContainer) Add(h types.Handler) {
+func (c *HandlerContainer) Add(h types.Handler) {
 	c.handlers = append(c.handlers, h)
 }
 
-func (r *handlerContainer) Get() []types.Handler {
+func (r *HandlerContainer) Get() []types.Handler {
 	return r.handlers
 }
 
 func GetHandlerContainer() types.HandlerContainer {
 	if container == nil {
-		container = &handlerContainer{
+		container = &HandlerContainer{
 			handlers: []types.Handler{},
 		}
 	}

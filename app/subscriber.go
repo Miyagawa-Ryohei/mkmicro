@@ -1,7 +1,6 @@
 package app
 
 import (
-	"github.com/Miyagawa-Ryohei/mkmicro/container"
 	"github.com/Miyagawa-Ryohei/mkmicro/infra"
 	"github.com/Miyagawa-Ryohei/mkmicro/types"
 	"sync"
@@ -11,14 +10,14 @@ import (
 type Subscriber struct {
 	log types.Logger
 	src types.SessionManager
+	container types.HandlerContainer
 }
 
 func (s *Subscriber) Listen() {
 
 	defer s.log.Flush()
 
-	c := container.GetHandlerContainer()
-	handlers := c.Get()
+	handlers := s.container.Get()
 	s.log.Debug("%d handler is found", len(handlers))
 	s.log.Info("start subscribe")
 	queue, err := s.src.GetQueue()
@@ -88,8 +87,9 @@ func (s *Subscriber) Listen() {
 				if result {
 					if err := queue.DeleteMessage(target); err != nil {
 						s.log.Error(err.Error())
+					} else {
+						target.SetDeleted(true)
 					}
-					target.SetDeleted(true)
 				}
 			}(m, mu, done)
 		}
@@ -98,7 +98,7 @@ func (s *Subscriber) Listen() {
 	}
 }
 
-func NewSubscriber(src types.SessionManager, logger types.Logger) *Subscriber {
+func NewSubscriber(src types.SessionManager, logger types.Logger, c types.HandlerContainer) *Subscriber {
 	log := logger
 	if log == nil {
 		log = infra.DefaultLogger
@@ -106,5 +106,6 @@ func NewSubscriber(src types.SessionManager, logger types.Logger) *Subscriber {
 	return &Subscriber{
 		src: src,
 		log: log,
+		container: c,
 	}
 }
