@@ -24,3 +24,9 @@ func GetHandlerContainer() types.HandlerContainer {
 	}
 	return container
 }
+
+func NewHandlerContainer() types.HandlerContainer {
+	return &HandlerContainer{
+		handlers: []types.Handler{},
+	}
+}
