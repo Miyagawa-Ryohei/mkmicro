@@ -12,8 +12,8 @@ func (c *HandlerContainer) Add(h types.Handler) {
 	c.handlers = append(c.handlers, h)
 }
 
-func (r *HandlerContainer) Get() []types.Handler {
-	return r.handlers
+func (c *HandlerContainer) Get() []types.Handler {
+	return c.handlers
 }
 
 func GetHandlerContainer() types.HandlerContainer {
