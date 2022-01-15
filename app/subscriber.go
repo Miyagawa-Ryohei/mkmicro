@@ -13,7 +13,7 @@ type Subscriber struct {
 	container types.HandlerContainer
 }
 
-func (s *Subscriber) Listen() {
+func (s *Subscriber) Listen(pollingSize int) {
 
 	defer s.log.Flush()
 
@@ -28,7 +28,7 @@ func (s *Subscriber) Listen() {
 	}
 
 	for {
-		messages, err := queue.GetMessage(1)
+		messages, err := queue.GetMessage(pollingSize)
 		if err != nil {
 			s.log.Error(err.Error())
 			continue

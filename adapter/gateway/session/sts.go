@@ -7,6 +7,9 @@ import (
 	"github.com/Miyagawa-Ryohei/mkmicro/adapter/gateway/driver/queue"
 	"github.com/Miyagawa-Ryohei/mkmicro/adapter/gateway/driver/storage"
 	"github.com/Miyagawa-Ryohei/mkmicro/types"
+	"github.com/aws/aws-sdk-go-v2/credentials/stscreds"
+	"github.com/aws/aws-sdk-go-v2/service/sts"
+	"log"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -64,37 +67,32 @@ func (s *STSManager) GetQueue() (types.QueueDriver, error) {
 	return *s.queue, nil
 }
 
-func (s *STSManager) CreateQueueWithConfig(customConfig types.QueueConfig) (types.QueueDriver, error) {
-	queueResolver := getResolvers(customConfig.GetAWSConfig())
-	queueCfg, err := awsConfig.LoadDefaultConfig(
-		context.TODO(),
-		queueResolver...,
-	)
+func (s *STSManager) CreateQueueWithConfig(cfg types.QueueConfig) (types.QueueDriver, error) {
+	c, err := s.getAWSConfig(cfg.GetAWSConfig())
 	if err != nil {
 		return nil, err
 	}
 
-	client := sqs.NewFromConfig(queueCfg)
-	driver := queue.NewSQSDriver(client, &customConfig)
+	client := sqs.NewFromConfig(*c)
+	driver := queue.NewSQSDriver(client, &cfg)
 	proxy := gateway.NewQueueProxyWithDriverInstance(s, driver)
 
 	return proxy, nil
 }
 
 func (s *STSManager) UpdateQueue(cfg *types.QueueConfig) (types.QueueDriver, error) {
-	var client *sqs.Client
-	if cfg != nil {
-		queueResolver := getResolvers(cfg.GetAWSConfig())
-		queueCfg, err := awsConfig.LoadDefaultConfig(
-			context.TODO(),
-			queueResolver...,
-		)
-		if err != nil {
-			return nil, err
-		}
-		client = sqs.NewFromConfig(queueCfg)
+	if cfg == nil {
+		return nil, fmt.Errorf("update session error( config is nil )")
 	}
+
+	c, err := s.getAWSConfig(cfg.GetAWSConfig())
+	if err != nil {
+		return nil, err
+	}
+
+	client := sqs.NewFromConfig(*c)
 	driver := queue.NewSQSDriver(client, cfg)
+
 	return driver, nil
 }
 
@@ -108,40 +106,63 @@ func (s *STSManager) GetStorage() (types.StorageDriver, error) {
 	}
 	return *s.storage, nil
 }
+func (s *STSManager) getAWSConfig(customConfig types.AWSConfig) (*aws.Config, error) {
+	resolver := getResolvers(customConfig)
 
-func (s *STSManager) CreateStorageWithConfig(customConfig types.StorageConfig) (types.StorageDriver, error) {
-	resolver := getResolvers(customConfig.GetAWSConfig())
 	cfg, err := awsConfig.LoadDefaultConfig(
 		context.TODO(),
 		resolver...,
 	)
+	if err != nil {
+		return nil, err
+	}
+
+	if customConfig.Profile != nil && customConfig.Profile.AssumeRole != "" {
+		svc := sts.NewFromConfig(cfg)
+		creds := stscreds.NewAssumeRoleProvider(svc,customConfig.Profile.AssumeRole)
+		cfg.Credentials = creds
+		sts2 := sts.NewFromConfig(cfg)
+		ans, err := sts2.GetCallerIdentity(context.TODO(),&sts.GetCallerIdentityInput{})
+		if err != nil {
+			log.Printf("%s", err.Error())
+		}
+		log.Printf("%+v", ans)
+	}
 
 	if err != nil {
 		return nil, err
 	}
-	client := s3.NewFromConfig(cfg, func(o *s3.Options) {
+
+	return &cfg, nil
+}
+
+func (s *STSManager) CreateStorageWithConfig(cfg types.StorageConfig) (types.StorageDriver, error) {
+
+	c, err := s.getAWSConfig(cfg.GetAWSConfig())
+	if err != nil {
+		return nil, err
+	}
+
+	client := s3.NewFromConfig(*c, func(o *s3.Options) {
 		o.UsePathStyle = true
 	})
-	driver := storage.NewS3Driver(client, &customConfig)
+
+	driver := storage.NewS3Driver(client, &cfg)
 	proxy := gateway.NewStorageProxyWithDriverInstance(s, driver)
 
 	return proxy, nil
 }
 
 func (s *STSManager) UpdateStorage(cfg *types.StorageConfig) (types.StorageDriver, error) {
-	var client *s3.Client
 	if cfg == nil {
 		return nil, fmt.Errorf("update session error( config is nil )")
 	}
-	storageResolver := getResolvers(cfg.GetAWSConfig())
-	storageCfg, err := awsConfig.LoadDefaultConfig(
-		context.TODO(),
-		storageResolver...,
-	)
+	c, err := s.getAWSConfig(cfg.GetAWSConfig())
 	if err != nil {
 		return nil, err
 	}
-	client = s3.NewFromConfig(storageCfg, func(o *s3.Options) {
+
+	client := s3.NewFromConfig(*c, func(o *s3.Options) {
 		o.UsePathStyle = true
 	})
 	driver := storage.NewS3Driver(client, cfg)
@@ -153,7 +174,7 @@ func getResolvers(config types.AWSConfig) []func(*awsConfig.LoadOptions) error {
 		cfg: config,
 	}
 	resolvers := []func(*awsConfig.LoadOptions) error{}
-	if config.Profile != nil {
+	if config.Profile != nil && config.Profile.Name != ""  {
 		resolvers = append(resolvers, awsConfig.WithSharedConfigProfile(config.Profile.Name))
 	} else if config.Credential != nil {
 		p := CustomCredentialProvider{
