@@ -117,9 +117,9 @@ func (s *STSManager) getAWSConfig(customConfig types.AWSConfig) (*aws.Config, er
 		return nil, err
 	}
 
-	if customConfig.Profile != nil && customConfig.Profile.AssumeRole != "" {
+	if customConfig.Profile != nil && customConfig.Profile.AssumeRoleArn != "" {
 		svc := sts.NewFromConfig(cfg)
-		creds := stscreds.NewAssumeRoleProvider(svc,customConfig.Profile.AssumeRole)
+		creds := stscreds.NewAssumeRoleProvider(svc,customConfig.Profile.AssumeRoleArn)
 		cfg.Credentials = creds
 		sts2 := sts.NewFromConfig(cfg)
 		ans, err := sts2.GetCallerIdentity(context.TODO(),&sts.GetCallerIdentityInput{})

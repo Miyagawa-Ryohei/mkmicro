@@ -45,7 +45,7 @@ func Test_AssumeRolePutAndGet(t *testing.T) {
 	object := bytes.NewBufferString(t.Name()+now).Bytes()
 	cfg := types.StorageConfig{
 		Profile:    &types.Profile{
-			AssumeRole: "arn:aws:iam::845799411254:role/S3UserRole",
+			AssumeRoleArn: "arn:aws:iam::845799411254:role/S3UserRole",
 		},
 	}
 	f := NewSTSManagerFactory(types.QueueConfig{},cfg)

@@ -12,8 +12,7 @@ type Credential struct {
 
 type Profile struct {
 	Name       string `mapstructure:"name,omitempty"`
-	Role       string `mapstructure:"role,omitempty"`
-	AssumeRole string `mapstructure:"assume_role,omitempty"`
+	AssumeRoleArn string `mapstructure:"assume_role_arn,omitempty"`
 }
 
 type AWSConfig struct {
