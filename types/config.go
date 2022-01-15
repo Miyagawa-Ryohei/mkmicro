@@ -11,7 +11,7 @@ type Credential struct {
 }
 
 type Profile struct {
-	Name       string `mapstructure:"name,omitempty"`
+	Name          string `mapstructure:"name,omitempty"`
 	AssumeRoleArn string `mapstructure:"assume_role_arn,omitempty"`
 }
 

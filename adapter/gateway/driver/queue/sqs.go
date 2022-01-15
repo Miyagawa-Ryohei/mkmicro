@@ -72,9 +72,9 @@ func (d *SQSDriver) parseMessage(msgs []awsTypes.Message) []types.Message {
 	return ret
 }
 
-func (d *SQSDriver) GetMessageLength() ([]string,error) {
+func (d *SQSDriver) GetMessageLength() ([]string, error) {
 	params := &sqs.GetQueueAttributesInput{
-		QueueUrl:            aws.String(d.url),
+		QueueUrl: aws.String(d.url),
 		AttributeNames: []awsTypes.QueueAttributeName{
 			"ApproximateNumberOfMessages",
 			"ApproximateNumberOfMessagesNotVisible",
@@ -97,7 +97,6 @@ func (d *SQSDriver) GetMessageLength() ([]string,error) {
 		resp.Attributes["ApproximateNumberOfMessagesDelayed"],
 	}, nil
 }
-
 
 func (d *SQSDriver) GetMessage(num int) ([]types.Message, error) {
 	params := &sqs.ReceiveMessageInput{

@@ -9,7 +9,6 @@ import (
 	"github.com/Miyagawa-Ryohei/mkmicro/types"
 	"github.com/aws/aws-sdk-go-v2/credentials/stscreds"
 	"github.com/aws/aws-sdk-go-v2/service/sts"
-	"log"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -119,14 +118,8 @@ func (s *STSManager) getAWSConfig(customConfig types.AWSConfig) (*aws.Config, er
 
 	if customConfig.Profile != nil && customConfig.Profile.AssumeRoleArn != "" {
 		svc := sts.NewFromConfig(cfg)
-		creds := stscreds.NewAssumeRoleProvider(svc,customConfig.Profile.AssumeRoleArn)
+		creds := stscreds.NewAssumeRoleProvider(svc, customConfig.Profile.AssumeRoleArn)
 		cfg.Credentials = creds
-		sts2 := sts.NewFromConfig(cfg)
-		ans, err := sts2.GetCallerIdentity(context.TODO(),&sts.GetCallerIdentityInput{})
-		if err != nil {
-			log.Printf("%s", err.Error())
-		}
-		log.Printf("%+v", ans)
 	}
 
 	if err != nil {
@@ -174,7 +167,7 @@ func getResolvers(config types.AWSConfig) []func(*awsConfig.LoadOptions) error {
 		cfg: config,
 	}
 	resolvers := []func(*awsConfig.LoadOptions) error{}
-	if config.Profile != nil && config.Profile.Name != ""  {
+	if config.Profile != nil && config.Profile.Name != "" {
 		resolvers = append(resolvers, awsConfig.WithSharedConfigProfile(config.Profile.Name))
 	} else if config.Credential != nil {
 		p := CustomCredentialProvider{

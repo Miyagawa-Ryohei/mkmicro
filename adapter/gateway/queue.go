@@ -28,7 +28,7 @@ func (q *QueueProxy) GetMessage(num int) ([]types.Message, error) {
 	return resp, err
 }
 
-func (q *QueueProxy) GetMessageLength()([]string, error) {
+func (q *QueueProxy) GetMessageLength() ([]string, error) {
 	return q.driver.GetMessageLength()
 }
 

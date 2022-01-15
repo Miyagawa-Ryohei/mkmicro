@@ -8,8 +8,8 @@ import (
 )
 
 type Subscriber struct {
-	log types.Logger
-	src types.SessionManager
+	log       types.Logger
+	src       types.SessionManager
 	container types.HandlerContainer
 }
 
@@ -104,8 +104,8 @@ func NewSubscriber(src types.SessionManager, logger types.Logger, c types.Handle
 		log = infra.DefaultLogger
 	}
 	return &Subscriber{
-		src: src,
-		log: log,
+		src:       src,
+		log:       log,
 		container: c,
 	}
 }
