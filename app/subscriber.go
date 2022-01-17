@@ -46,11 +46,9 @@ func (s *Subscriber) Listen(pollingSize int) {
 				mu := &sync.Mutex{}
 				done := new(bool)
 				*done = false
-				go func(){
-					defer wg.Done()
-					ChangeMessageVisibility(queue, target, mu, done, s.log)
-				}()
+				go ChangeMessageVisibility(queue, target, mu, done, s.log)
 				go func(target types.Message, mu *sync.Mutex, done *bool) {
+					defer wg.Done()
 					s.log.Debug("[%s] worker start", target.GetDeleteID())
 					result := true
 					start := time.Now()
