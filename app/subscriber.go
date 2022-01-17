@@ -79,7 +79,6 @@ func (s *Subscriber) Listen(pollingSize int) {
 					}
 				}(target, mu, done)
 			}(m)
-			wg.Wait()
 		}
 		s.log.Info("[subscriber main] wait for processing messages")
 		wg.Wait()
