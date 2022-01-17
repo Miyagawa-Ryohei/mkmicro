@@ -7,6 +7,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
 	awsTypes "github.com/aws/aws-sdk-go-v2/service/sqs/types"
+	"log"
 )
 
 type SQSConfig struct {
@@ -123,12 +124,14 @@ func (d *SQSDriver) DeleteMessage(msg types.DeletableMessage) error {
 		QueueUrl:      aws.String(d.url),
 		ReceiptHandle: aws.String(msg.GetDeleteID()),
 	}
-	_, err := d.queue.DeleteMessage(context.TODO(), params)
-	msg.SetDeleted(true)
+	res, err := d.queue.DeleteMessage(context.TODO(), params)
 
 	if err != nil {
+		log.Print(res)
 		return err
 	}
+
+	msg.SetDeleted(true)
 	return nil
 }
 

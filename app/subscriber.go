@@ -88,6 +88,7 @@ func (s *Subscriber) Listen(pollingSize int) {
 				if result {
 					if err := queue.DeleteMessage(target); err != nil {
 						s.log.Error(err.Error())
+						panic(err.Error())
 					} else {
 						target.SetDeleted(true)
 					}
