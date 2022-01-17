@@ -75,8 +75,9 @@ func (s *Subscriber) Listen(pollingSize int) {
 						s.log.Info("[%s]handler returns some error. stop change visibility for retry", target.GetDeleteID())
 						s.log.Error(err.Error())
 						result = false
+					} else {
+						s.log.Info("[%s]all handler returns no errors. message is processed correctly", target.GetDeleteID())
 					}
-					s.log.Info("[%s]all handler returns no errors. message is processed correctly", target.GetDeleteID())
 					s.log.Debug("[%s]worker takes %d msec", target.GetDeleteID(), (time.Now().UnixNano()-start.UnixNano())/int64(time.Millisecond))
 				}
 				s.log.Debug("[%s]all worker takes %d msec", target.GetDeleteID(), (time.Now().UnixNano()-start.UnixNano())/int64(time.Millisecond))
