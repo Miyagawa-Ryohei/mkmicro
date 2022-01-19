@@ -54,16 +54,16 @@ func (s *Subscriber) Listen(pollingSize int) {
 					start := time.Now()
 					for _, handler := range handlers {
 						if err := handler.Exec(target, s.src); err != nil {
-							s.log.Info("[%s]handler returns some error. stop change visibility for retry", target.GetDeleteID())
+							s.log.Info("[%s]handler returns some error. stop change visibility for retry")
 							s.log.Error(err.Error())
 							result = false
 						} else {
-							s.log.Info("[%s]all handler returns no errors. message is processed correctly", target.GetDeleteID())
+							s.log.Info("all handler returns no errors. message is processed correctly")
 						}
-						s.log.Debug("[%s]worker takes %d msec", target.GetDeleteID(), (time.Now().UnixNano()-start.UnixNano())/int64(time.Millisecond))
+						s.log.Debug("worker takes %d msec", (time.Now().UnixNano()-start.UnixNano())/int64(time.Millisecond))
 					}
-					s.log.Debug("[%s]all worker takes %d msec", target.GetDeleteID(), (time.Now().UnixNano()-start.UnixNano())/int64(time.Millisecond))
-					s.log.Info("[%s] all worker end", target.GetDeleteID())
+					s.log.Debug("all worker takes %d msec",  (time.Now().UnixNano()-start.UnixNano())/int64(time.Millisecond))
+					s.log.Info("all worker end" )
 					mu.Lock()
 					defer mu.Unlock()
 					*done = true
@@ -105,6 +105,7 @@ func ChangeMessageVisibility(queue types.QueueDriver, target types.Message, mu *
 		if !(target.IsDeleted()) {
 			if err := queue.ChangeMessageVisibility(target); err != nil {
 				log.Error(err.Error())
+				return
 			}
 			mu.Unlock()
 		} else {
