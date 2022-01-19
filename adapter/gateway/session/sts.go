@@ -7,14 +7,12 @@ import (
 	"github.com/Miyagawa-Ryohei/mkmicro/adapter/gateway/driver/queue"
 	"github.com/Miyagawa-Ryohei/mkmicro/adapter/gateway/driver/storage"
 	"github.com/Miyagawa-Ryohei/mkmicro/types"
-	"github.com/aws/aws-sdk-go-v2/credentials/stscreds"
-	"github.com/aws/aws-sdk-go-v2/service/sts"
-	"time"
-
 	"github.com/aws/aws-sdk-go-v2/aws"
 	awsConfig "github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/credentials/stscreds"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
+	"github.com/aws/aws-sdk-go-v2/service/sts"
 )
 
 type CustomEndpointResolver struct {
@@ -38,10 +36,6 @@ func (p CustomCredentialProvider) Retrieve(ctx context.Context) (aws.Credentials
 	return aws.Credentials{
 		AccessKeyID:     p.src.Credential.AccessKey,
 		SecretAccessKey: p.src.Credential.AccessKeySecret,
-		SessionToken:    "",
-		Source:          "",
-		CanExpire:       false,
-		Expires:         time.Time{},
 	}, nil
 }
 
