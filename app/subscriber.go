@@ -114,6 +114,7 @@ func NewSubscriber(src types.SessionManager, logger types.Logger, c types.Handle
 func ChangeMessageVisibility(queue types.QueueDriver, target types.Message, mu *sync.Mutex, done *bool, log types.Logger) {
 	defer mu.Unlock()
 	for {
+		time.Sleep(40 * time.Second)
 		mu.Lock()
 		if *done {
 			return
@@ -127,6 +128,5 @@ func ChangeMessageVisibility(queue types.QueueDriver, target types.Message, mu *
 			return
 		}
 		mu.Unlock()
-		time.Sleep(40 * time.Second)
 	}
 }
