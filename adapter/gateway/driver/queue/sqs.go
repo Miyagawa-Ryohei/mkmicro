@@ -48,12 +48,12 @@ func (m *SQSMessage) IsDeleted() bool {
 func (d *SQSDriver) GetConfig() *types.QueueConfig {
 	return d.config
 }
-func (d *SQSDriver) PutMessage(raw []byte) error {
+func (d *SQSDriver) PutMessage(raw []byte, delay int32) error {
 
 	params := &sqs.SendMessageInput{
 		MessageBody:  aws.String(string(raw)),
 		QueueUrl:     aws.String(d.url),
-		DelaySeconds: 1,
+		DelaySeconds: delay,
 	}
 
 	if _, err := d.queue.SendMessage(context.TODO(), params); err != nil {

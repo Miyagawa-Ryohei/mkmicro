@@ -32,7 +32,7 @@ func (q *QueueProxy) GetMessageLength() ([]string, error) {
 	return q.driver.GetMessageLength()
 }
 
-func (q *QueueProxy) PutMessage(raw []byte) error {
+func (q *QueueProxy) PutMessage(raw []byte, delay int32) error {
 	return q.driver.PutMessage(raw)
 }
 
