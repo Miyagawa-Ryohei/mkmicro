@@ -19,7 +19,7 @@ type CustomEndpointResolver struct {
 	cfg types.AWSConfig
 }
 
-func (c CustomEndpointResolver) ResolveEndpoint(service, region string, options ...interface{}) (aws.Endpoint, error) {
+func (c CustomEndpointResolver) ResolveEndpoint(service string, region string, options ...interface{}) (aws.Endpoint, error) {
 	return aws.Endpoint{
 		PartitionID:   "aws",
 		URL:           c.cfg.Endpoint.URL,
@@ -157,9 +157,6 @@ func (s *STSManager) UpdateStorage(cfg *types.StorageConfig) (types.StorageDrive
 }
 
 func getResolvers(config types.AWSConfig) []func(*awsConfig.LoadOptions) error {
-	r := CustomEndpointResolver{
-		cfg: config,
-	}
 	resolvers := []func(*awsConfig.LoadOptions) error{}
 	if config.Profile != nil && config.Profile.Name != "" {
 		resolvers = append(resolvers, awsConfig.WithSharedConfigProfile(config.Profile.Name))
@@ -170,7 +167,12 @@ func getResolvers(config types.AWSConfig) []func(*awsConfig.LoadOptions) error {
 		resolvers = append(resolvers, awsConfig.WithCredentialsProvider(p))
 	}
 	if config.Endpoint != nil {
+		r := CustomEndpointResolver{
+			cfg: config,
+		}
 		resolvers = append(resolvers, awsConfig.WithEndpointResolverWithOptions(r))
+	} else {
+		resolvers = append(resolvers, awsConfig.WithRegion("ap-northeast-1"))
 	}
 	return resolvers
 }
