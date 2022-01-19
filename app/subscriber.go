@@ -37,9 +37,23 @@ func (s *Subscriber) Listen(pollingSize int) {
 			s.log.Info("message queue is empty, re-polling after 10 second")
 			time.Sleep(10 * time.Second)
 		}
+		msgs := []types.Message{}
+
+		for _, m := range messages {
+			exist := false
+			for _, m2 := range msgs {
+				if m.GetChangeVisibilityID() == m2.GetChangeVisibilityID() {
+					exist = true
+				}
+			}
+			if !exist {
+				msgs = append(msgs, m)
+			}
+		}
+
 		s.log.Debug("%d message is received", len(messages))
 		wg := &sync.WaitGroup{}
-		for _, m := range messages {
+		for _, m := range msgs {
 			wg.Add(1)
 
 			go func(target types.Message) {

@@ -33,7 +33,7 @@ func (q *QueueProxy) GetMessageLength() ([]string, error) {
 }
 
 func (q *QueueProxy) PutMessage(raw []byte, delay int32) error {
-	return q.driver.PutMessage(raw)
+	return q.driver.PutMessage(raw, delay)
 }
 
 func (q *QueueProxy) DeleteMessage(msg types.DeletableMessage) error {
