@@ -82,6 +82,9 @@ func (s *Subscriber) Listen(pollingSize int) {
 					defer mu.Unlock()
 					*done = true
 					if result {
+						if err := queue.ChangeMessageVisibility(target, 10); err != nil {
+							s.log.Error(err.Error())
+						}
 						if err := queue.DeleteMessage(target); err != nil {
 							s.log.Error(err.Error())
 						} else {
@@ -116,14 +119,14 @@ func ChangeMessageVisibility(queue types.QueueDriver, target types.Message, mu *
 			return
 		}
 		if !(target.IsDeleted()) {
-			if err := queue.ChangeMessageVisibility(target); err != nil {
+			if err := queue.ChangeMessageVisibility(target,60); err != nil {
 				log.Error(err.Error())
 				return
 			}
-			mu.Unlock()
 		} else {
 			return
 		}
+		mu.Unlock()
 		time.Sleep(40 * time.Second)
 	}
 }

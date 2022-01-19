@@ -135,11 +135,11 @@ func (d *SQSDriver) DeleteMessage(msg types.DeletableMessage) error {
 	return nil
 }
 
-func (d *SQSDriver) ChangeMessageVisibility(msg types.ChangeVisibilityMessage) error {
+func (d *SQSDriver) ChangeMessageVisibility(msg types.ChangeVisibilityMessage, second int32) error {
 	params := &sqs.ChangeMessageVisibilityInput{
 		QueueUrl:          aws.String(d.url),
 		ReceiptHandle:     aws.String(msg.GetChangeVisibilityID()),
-		VisibilityTimeout: 60,
+		VisibilityTimeout: second,
 	}
 	_, err := d.queue.ChangeMessageVisibility(context.TODO(), params)
 

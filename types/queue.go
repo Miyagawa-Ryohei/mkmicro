@@ -6,5 +6,5 @@ type QueueDriver interface {
 	PutMessage(raw []byte, delay int32) error
 	DeleteMessage(msg DeletableMessage) error
 	GetMessageLength() ([]string, error)
-	ChangeMessageVisibility(msg ChangeVisibilityMessage) error
+	ChangeMessageVisibility(msg ChangeVisibilityMessage, second int32) error
 }

@@ -40,8 +40,8 @@ func (q *QueueProxy) DeleteMessage(msg types.DeletableMessage) error {
 	return q.driver.DeleteMessage(msg)
 }
 
-func (q *QueueProxy) ChangeMessageVisibility(msg types.ChangeVisibilityMessage) error {
-	return q.driver.ChangeMessageVisibility(msg)
+func (q *QueueProxy) ChangeMessageVisibility(msg types.ChangeVisibilityMessage, second int32) error {
+	return q.driver.ChangeMessageVisibility(msg, second)
 }
 
 func NewQueueProxy(session types.QueueSessionUpdater) (types.QueueDriver, error) {
