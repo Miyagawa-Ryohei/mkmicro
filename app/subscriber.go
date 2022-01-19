@@ -42,7 +42,7 @@ func (s *Subscriber) Listen(pollingSize int) {
 		for _, m := range messages {
 			wg.Add(1)
 
-			go func (target types.Message) {
+			go func(target types.Message) {
 				mu := &sync.Mutex{}
 				done := new(bool)
 				*done = false
@@ -95,7 +95,7 @@ func NewSubscriber(src types.SessionManager, logger types.Logger, c types.Handle
 	}
 }
 
-func ChangeMessageVisibility (queue types.QueueDriver, target types.Message, mu *sync.Mutex, done *bool, log types.Logger) {
+func ChangeMessageVisibility(queue types.QueueDriver, target types.Message, mu *sync.Mutex, done *bool, log types.Logger) {
 	defer mu.Unlock()
 	for {
 		mu.Lock()

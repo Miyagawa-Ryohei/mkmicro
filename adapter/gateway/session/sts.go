@@ -29,7 +29,7 @@ func (c CustomEndpointResolver) ResolveEndpoint(service string, region string, o
 	}, nil
 }
 
-type EnvCredentialProvider struct {}
+type EnvCredentialProvider struct{}
 
 func (p EnvCredentialProvider) Retrieve(ctx context.Context) (aws.Credentials, error) {
 	return aws.Credentials{

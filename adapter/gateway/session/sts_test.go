@@ -113,7 +113,7 @@ func Test_Queue(t *testing.T) {
 			t.Fatal("message empty")
 		}
 		msg := string(messages[0].GetBody())
-		if  msg != "HelloQueue" {
+		if msg != "HelloQueue" {
 			t.Fatal("message expected : HelloQueue, but actual : " + msg)
 		}
 		for _, m := range messages {
