@@ -13,6 +13,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
 	"github.com/aws/aws-sdk-go-v2/service/sts"
+	"os"
 )
 
 type CustomEndpointResolver struct {
@@ -25,6 +26,15 @@ func (c CustomEndpointResolver) ResolveEndpoint(service string, region string, o
 		URL:           c.cfg.Endpoint.URL,
 		SigningRegion: c.cfg.Endpoint.Region,
 		SigningMethod: "s3v4",
+	}, nil
+}
+
+type EnvCredentialProvider struct {}
+
+func (p EnvCredentialProvider) Retrieve(ctx context.Context) (aws.Credentials, error) {
+	return aws.Credentials{
+		AccessKeyID:     os.Getenv("AWS_ACCESS_KEY_ID"),
+		SecretAccessKey: os.Getenv("AWS_ACCESS_KEY_SECRET"),
 	}, nil
 }
 
@@ -164,6 +174,9 @@ func getResolvers(config types.AWSConfig) []func(*awsConfig.LoadOptions) error {
 		p := CustomCredentialProvider{
 			src: config,
 		}
+		resolvers = append(resolvers, awsConfig.WithCredentialsProvider(p))
+	} else {
+		p := EnvCredentialProvider{}
 		resolvers = append(resolvers, awsConfig.WithCredentialsProvider(p))
 	}
 	if config.Endpoint != nil {
