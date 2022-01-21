@@ -181,7 +181,7 @@ func getResolvers(config types.AWSConfig) []func(*awsConfig.LoadOptions) error {
 			src: config,
 		}
 		resolvers = append(resolvers, awsConfig.WithCredentialsProvider(p))
-	} else {
+	} else if envAccessKey != "" && envSecret != "" {
 		p := EnvCredentialProvider{}
 		resolvers = append(resolvers, awsConfig.WithCredentialsProvider(p))
 	}
@@ -190,7 +190,7 @@ func getResolvers(config types.AWSConfig) []func(*awsConfig.LoadOptions) error {
 			cfg: config,
 		}
 		resolvers = append(resolvers, awsConfig.WithEndpointResolverWithOptions(r))
-	} else if envAccessKey != "" && envSecret != "" {
+	} else  {
 		resolvers = append(resolvers, awsConfig.WithRegion("ap-northeast-1"))
 	}
 	return resolvers
