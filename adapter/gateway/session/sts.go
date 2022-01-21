@@ -34,7 +34,7 @@ type EnvCredentialProvider struct{}
 func (p EnvCredentialProvider) Retrieve(ctx context.Context) (aws.Credentials, error) {
 	return aws.Credentials{
 		AccessKeyID:     os.Getenv("AWS_ACCESS_KEY_ID"),
-		SecretAccessKey: os.Getenv("AWS_ACCESS_KEY_SECRET"),
+		SecretAccessKey: os.Getenv("AWS_SECRET_ACCESS_KEY"),
 	}, nil
 }
 
@@ -168,6 +168,8 @@ func (s *STSManager) UpdateStorage(cfg *types.StorageConfig) (types.StorageDrive
 
 func getResolvers(config types.AWSConfig) []func(*awsConfig.LoadOptions) error {
 	resolvers := []func(*awsConfig.LoadOptions) error{}
+	envAccessKey := os.Getenv("AWS_ACCESS_KEY_ID")
+	envSecret := os.Getenv("AWS_SECRET_ACCESS_KEY")
 	if config.Profile != nil && config.Profile.Name != "" {
 		resolvers = append(resolvers, awsConfig.WithSharedConfigProfile(config.Profile.Name))
 	} else if config.Credential != nil {
@@ -184,7 +186,7 @@ func getResolvers(config types.AWSConfig) []func(*awsConfig.LoadOptions) error {
 			cfg: config,
 		}
 		resolvers = append(resolvers, awsConfig.WithEndpointResolverWithOptions(r))
-	} else {
+	} else if envAccessKey != "" && envSecret != "" {
 		resolvers = append(resolvers, awsConfig.WithRegion("ap-northeast-1"))
 	}
 	return resolvers
