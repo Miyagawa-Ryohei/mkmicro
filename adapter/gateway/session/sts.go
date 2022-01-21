@@ -112,18 +112,10 @@ func (s *STSManager) GetStorage() (types.StorageDriver, error) {
 func (s *STSManager) getAWSConfig(customConfig types.AWSConfig) (*aws.Config, error) {
 	resolver := getResolvers(customConfig)
 
-	cfg := aws.Config{}
-	var e error = nil
-	if len(resolver) > 0 {
-		cfg, e = awsConfig.LoadDefaultConfig(
-			context.TODO(),
-			resolver...,
-		)
-	} else {
-		cfg, e = awsConfig.LoadDefaultConfig(
-			context.TODO(),
-		)
-	}
+	cfg, e := awsConfig.LoadDefaultConfig(
+		context.TODO(),
+		resolver...,
+	)
 	if e != nil {
 		return nil, e
 	}
@@ -190,9 +182,8 @@ func getResolvers(config types.AWSConfig) []func(*awsConfig.LoadOptions) error {
 			cfg: config,
 		}
 		resolvers = append(resolvers, awsConfig.WithEndpointResolverWithOptions(r))
-	} else  {
-		resolvers = append(resolvers, awsConfig.WithRegion("ap-northeast-1"))
 	}
+	resolvers = append(resolvers, awsConfig.WithRegion("ap-northeast-1"))
 	return resolvers
 }
 
