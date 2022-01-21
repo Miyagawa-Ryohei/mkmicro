@@ -112,22 +112,26 @@ func (s *STSManager) GetStorage() (types.StorageDriver, error) {
 func (s *STSManager) getAWSConfig(customConfig types.AWSConfig) (*aws.Config, error) {
 	resolver := getResolvers(customConfig)
 
-	cfg, err := awsConfig.LoadDefaultConfig(
-		context.TODO(),
-		resolver...,
-	)
-	if err != nil {
-		return nil, err
+	cfg := aws.Config{}
+	var e error = nil
+	if len(resolver) > 0 {
+		cfg, e = awsConfig.LoadDefaultConfig(
+			context.TODO(),
+			resolver...,
+		)
+	} else {
+		cfg, e = awsConfig.LoadDefaultConfig(
+			context.TODO(),
+		)
+	}
+	if e != nil {
+		return nil, e
 	}
 
 	if customConfig.Profile != nil && customConfig.Profile.AssumeRoleArn != "" {
 		svc := sts.NewFromConfig(cfg)
 		creds := stscreds.NewAssumeRoleProvider(svc, customConfig.Profile.AssumeRoleArn)
 		cfg.Credentials = creds
-	}
-
-	if err != nil {
-		return nil, err
 	}
 
 	return &cfg, nil
