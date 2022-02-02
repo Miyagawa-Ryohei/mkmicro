@@ -31,6 +31,7 @@ func (s *Subscriber) Listen(pollingSize int) {
 		messages, err := queue.GetMessage(pollingSize)
 		if err != nil {
 			s.log.Error(err.Error())
+			time.Sleep(60 * time.Second)
 			continue
 		}
 		if len(messages) == 0 {
