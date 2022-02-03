@@ -23,7 +23,6 @@ type DefaultEndpointResolver struct {}
 func (c DefaultEndpointResolver) ResolveEndpoint(service string, region string, options ...interface{}) (aws.Endpoint, error) {
 	return aws.Endpoint{
 		PartitionID:   service,
-
 		SigningRegion: region,
 		SigningMethod: "s3v4",
 	}, nil
@@ -195,6 +194,8 @@ func getResolvers(config types.AWSConfig) []func(*awsConfig.LoadOptions) error {
 			cfg: config,
 		}
 		resolvers = append(resolvers, awsConfig.WithEndpointResolverWithOptions(r))
+	} else {
+		resolvers = append(resolvers, awsConfig.WithEndpointResolverWithOptions(DefaultEndpointResolver{}))
 	}
 	resolvers = append(resolvers, awsConfig.WithRegion("ap-northeast-1"))
 	return resolvers
