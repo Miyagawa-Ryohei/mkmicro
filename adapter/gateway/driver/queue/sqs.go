@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"github.com/Miyagawa-Ryohei/mkmicro/types"
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -78,7 +79,9 @@ func (d *SQSDriver) parseMessage(msgs []awsTypes.Message) []types.Message {
 		body := bytes.NewBufferString(*m.Body).Bytes()
 		hash := sha256.New()
 		hash.Write(body)
-		v := string(hash.Sum(nil))
+		v := hex.EncodeToString(hash.Sum(nil))
+		fmt.Printf("message id %s", *m.MessageId)
+		fmt.Printf("receipt handle %s", *m.ReceiptHandle)
 		ret = append(ret, &SQSMessage{
 			raw:     &m,
 			deduplicationKey: v,
