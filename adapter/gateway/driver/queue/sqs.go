@@ -4,11 +4,11 @@ import (
 	"bytes"
 	"context"
 	"crypto/sha256"
+	"fmt"
 	"github.com/Miyagawa-Ryohei/mkmicro/types"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
 	awsTypes "github.com/aws/aws-sdk-go-v2/service/sqs/types"
-	"log"
 )
 
 type SQSConfig struct {
@@ -140,7 +140,7 @@ func (d *SQSDriver) DeleteMessage(msg types.DeletableMessage) error {
 	res, err := d.queue.DeleteMessage(context.TODO(), params)
 
 	if err != nil {
-		log.Print(res)
+		fmt.Printf("%+v", res)
 		return err
 	}
 
