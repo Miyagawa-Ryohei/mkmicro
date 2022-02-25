@@ -29,6 +29,10 @@ func (m *SQSMessage) GetBody() []byte {
 	return bytes.NewBufferString(*m.raw.Body).Bytes()
 }
 
+func (m *SQSMessage) GetID() string {
+	return *m.raw.MessageId
+}
+
 func (m *SQSMessage) GetChangeVisibilityID() string {
 	return *m.raw.ReceiptHandle
 }

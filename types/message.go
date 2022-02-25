@@ -1,6 +1,7 @@
 package types
 
 type Message interface {
+	GetID() string
 	DeletableMessage
 	ChangeVisibilityMessage
 	GetBody() []byte

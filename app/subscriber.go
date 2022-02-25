@@ -3,6 +3,7 @@ package app
 import (
 	"github.com/Miyagawa-Ryohei/mkmicro/infra"
 	"github.com/Miyagawa-Ryohei/mkmicro/types"
+	"github.com/google/uuid"
 	"sync"
 	"time"
 )
@@ -29,11 +30,13 @@ func (s *Subscriber) Listen(pollingSize int) {
 
 	for {
 		messages, err := queue.GetMessage(pollingSize)
+		processID := uuid.New().String()
 		if err != nil {
 			s.log.Error(err.Error())
 			time.Sleep(60 * time.Second)
 			continue
 		}
+		s.log.Info("start message processor [%s]",processID)
 		if len(messages) == 0 {
 			s.log.Info("message queue is empty, re-polling after 10 second")
 			time.Sleep(10 * time.Second)
@@ -58,14 +61,14 @@ func (s *Subscriber) Listen(pollingSize int) {
 			wg.Add(1)
 
 			go func(target types.Message) {
-				s.log.Debug("start processing message %s", target.GetDeleteID())
+				s.log.Debug("start processing message %s", target.GetID())
 				mu := &sync.Mutex{}
 				done := new(bool)
 				*done = false
 				go ChangeMessageVisibility(queue, target, mu, done, s.log)
 				go func(target types.Message, mu *sync.Mutex, done *bool) {
 					defer wg.Done()
-					s.log.Debug("worker start [%s]", target.GetDeleteID())
+					s.log.Debug("worker start [%s]", target.GetID())
 					result := true
 					start := time.Now()
 					for _, handler := range handlers {
@@ -87,7 +90,7 @@ func (s *Subscriber) Listen(pollingSize int) {
 						if err := queue.ChangeMessageVisibility(target, 10); err != nil {
 							s.log.Error(err.Error())
 						}
-						s.log.Debug("delete message %s", target.GetDeleteID())
+						s.log.Debug("delete message %s", target.GetID())
 						if err := queue.DeleteMessage(target); err != nil {
 							s.log.Error(err.Error())
 						} else {
@@ -97,8 +100,9 @@ func (s *Subscriber) Listen(pollingSize int) {
 				}(target, mu, done)
 			}(m)
 		}
-		s.log.Info("[subscriber main] wait for processing messages")
+		s.log.Info("wait for done [%s]",processID)
 		wg.Wait()
+		s.log.Info("done [%s]",processID)
 	}
 }
 
@@ -123,13 +127,13 @@ func ChangeMessageVisibility(queue types.QueueDriver, target types.Message, mu *
 			return
 		}
 		if !(target.IsDeleted()) {
-			log.Debug("change message visibility %s", target.GetChangeVisibilityID())
+			log.Debug("change message visibility %s", target.GetID())
 			if err := queue.ChangeMessageVisibility(target,60); err != nil {
 				log.Error(err.Error())
 				return
 			}
 		} else {
-			log.Debug("message is deleted %d", target.GetDeleteID())
+			log.Debug("message is deleted %d", target.GetID())
 			return
 		}
 		mu.Unlock()
