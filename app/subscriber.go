@@ -47,6 +47,10 @@ func (s *Subscriber) Listen(pollingSize int) {
 			exist := false
 			for _, m2 := range msgs {
 				if m.GetChangeVisibilityID() == m2.GetChangeVisibilityID() {
+					if err := queue.DeleteMessage(m); err != nil {
+						s.log.Error("duplicate message cannot delete %s", m.GetDeleteID())
+						continue
+					}
 					exist = true
 				}
 			}
