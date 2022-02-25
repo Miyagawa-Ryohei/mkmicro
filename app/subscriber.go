@@ -13,24 +13,113 @@ type Subscriber struct {
 	log       types.Logger
 	src       types.SessionManager
 	container types.HandlerContainer
+	msgChan   chan types.Message
+	wg		  *sync.WaitGroup
+}
+
+type ProcessManager struct {
+	queue types.QueueDriver
+	handlers []types.Handler
+	log types.Logger
+	mu *sync.Mutex
+	wg *sync.WaitGroup
+	sess types.SessionManager
+}
+
+func (p *ProcessManager) changeMessageVisibility(target types.Message, ctx context.Context){
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-time.After(30 * time.Second)	:
+			p.mu.Lock()
+			if !(target.IsDeleted()) {
+				if err := p.queue.ChangeMessageVisibility(target,60); err != nil {
+					p.log.Error(err.Error())
+				}
+			}
+			p.mu.Unlock()
+		}
+	}
+}
+
+func (p *ProcessManager)runWorker(target types.Message,cancel context.CancelFunc) {
+
+	defer func(){
+		p.log.Info("worker done [%s]", target.GetID())
+		p.wg.Done()
+	}()
+	p.log.Debug("worker start [%s]", target.GetID())
+
+	result := true
+	start := time.Now()
+
+	for _, handler := range p.handlers {
+		if err := handler.Exec(target, p.sess); err != nil {
+			p.log.Info("[%s]handler returns some error. stop change visibility for retry")
+			p.log.Error(err.Error())
+			result = false
+		} else {
+			p.log.Info("all handler returns no errors. message is processed correctly")
+		}
+		p.log.Debug("worker takes %d msec", (time.Now().UnixNano()-start.UnixNano())/int64(time.Millisecond))
+	}
+
+	p.log.Debug("all worker takes %d msec",  (time.Now().UnixNano()-start.UnixNano())/int64(time.Millisecond))
+	p.log.Info("all worker end" )
+
+	if result {
+		p.log.Debug("delete message %s", target.GetDeleteID())
+		cancel()
+		p.mu.Lock()
+		defer p.mu.Unlock()
+		if err := p.queue.DeleteMessage(target); err != nil {
+			p.log.Error("delete message error : [%s]", err.Error())
+		} else {
+			target.SetDeleted(true)
+		}
+	}
+}
+
+func (s *Subscriber) Exec(queue types.QueueDriver,handlers []types.Handler) {
+	p := ProcessManager{
+		queue :queue,
+		handlers: handlers,
+		mu: &sync.Mutex{},
+		log: s.log,
+		wg: s.wg,
+		sess: s.src,
+	}
+	for{
+		msg := <- s.msgChan
+		s.log.Debug("start processing message %s", msg.GetDeleteID())
+		ctx := context.Background()
+		ctxChild, cancel := context.WithCancel(ctx)
+
+		go p.changeMessageVisibility(msg,ctxChild)
+		p.runWorker(msg,cancel)
+	}
 }
 
 func (s *Subscriber) Listen(pollingSize int) {
 
 	defer s.log.Flush()
 
-	handlers := s.container.Get()
-	s.log.Debug("%d handler is found", len(handlers))
+	h := s.container.Get()
+	s.log.Debug("%d handler is found", len(h))
 	s.log.Info("start subscribe")
-	queue, err := s.src.GetQueue()
+	q, err := s.src.GetQueue()
 
 	if err != nil {
-		s.log.Error("%d handler is found", len(handlers))
+		s.log.Error("cannot get queue")
 		panic(err)
+	}
+	for i := 0; i < 10; i++ {
+		go s.Exec(q, h)
 	}
 
 	for {
-		messages, err := queue.GetMessage(pollingSize)
+		messages, err := q.GetMessage(pollingSize)
 		processID := uuid.New().String()
 		if err != nil {
 			s.log.Error(err.Error())
@@ -38,7 +127,6 @@ func (s *Subscriber) Listen(pollingSize int) {
 			continue
 		}
 		s.log.Info("start message processor [%s]",processID)
-
 		msgs := deduplicationMessages(messages)
 
 		if len(msgs) == 0 {
@@ -48,75 +136,13 @@ func (s *Subscriber) Listen(pollingSize int) {
 
 		s.log.Debug("%d message is received", len(messages))
 		s.log.Debug("%d message is processed", len(msgs))
-		wg := &sync.WaitGroup{}
 		for _, m := range msgs {
-			wg.Add(1)
-			processor := func() {
-				mu := &sync.Mutex{}
-				s.log.Debug("start processing message %s", m.GetDeleteID())
-				ctx := context.Background()
-				ctxChild, cancel := context.WithCancel(ctx)
-
-				go func(queue types.QueueDriver, target types.Message, mu *sync.Mutex){
-					for {
-						select {
-						case <-ctxChild.Done():
-							return
-						case <-time.After(30 * time.Second)	:
-							mu.Lock()
-							if !(target.IsDeleted()) {
-								if err := queue.ChangeMessageVisibility(target,60); err != nil {
-									s.log.Error(err.Error())
-								}
-							}
-							mu.Unlock()
-						}
-					}
-				}(queue, m, mu)
-
-				go func(target types.Message, mu *sync.Mutex) {
-					defer func(){
-						s.log.Info("worker done [%s]", target.GetID())
-						wg.Done()
-					}()
-					s.log.Debug("worker start [%s]", target.GetID())
-
-					result := true
-					start := time.Now()
-
-					for _, handler := range handlers {
-						if err := handler.Exec(target, s.src); err != nil {
-							s.log.Info("[%s]handler returns some error. stop change visibility for retry")
-							s.log.Error(err.Error())
-							result = false
-						} else {
-							s.log.Info("all handler returns no errors. message is processed correctly")
-						}
-						s.log.Debug("worker takes %d msec", (time.Now().UnixNano()-start.UnixNano())/int64(time.Millisecond))
-					}
-
-					s.log.Debug("all worker takes %d msec",  (time.Now().UnixNano()-start.UnixNano())/int64(time.Millisecond))
-					s.log.Info("all worker end" )
-
-					if result {
-						s.log.Debug("delete message %s", target.GetDeleteID())
-						cancel()
-						mu.Lock()
-						defer mu.Unlock()
-						if err := queue.DeleteMessage(target); err != nil {
-							s.log.Error("delete message error : [%s]", err.Error())
-						} else {
-							target.SetDeleted(true)
-						}
-					}
-				}(m, mu)
-			}
-			processor()
+			s.wg.Add(1)
+			s.msgChan <- m
 		}
 		s.log.Info("wait for done [%s]",processID)
-		wg.Wait()
+		s.wg.Wait()
 		s.log.Info("done [%s]",processID)
-		time.Sleep(1 * time.Second)
 	}
 }
 
