@@ -139,8 +139,9 @@ func (d *SQSDriver) DeleteMessage(msg types.DeletableMessage) error {
 		QueueUrl:      aws.String(d.url),
 		ReceiptHandle: aws.String(msg.GetDeleteID()),
 	}
-	res, err := d.queue.DeleteMessage(context.TODO(), params)
-
+	ctx := context.TODO()
+	res, err := d.queue.DeleteMessage(ctx, params)
+	ctx.Done()
 	if err != nil {
 		fmt.Printf("%+v", res)
 		return err

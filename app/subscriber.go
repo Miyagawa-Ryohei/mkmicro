@@ -30,6 +30,7 @@ func (p *ProcessManager) changeMessageVisibility(target types.Message, ctx conte
 	for {
 		select {
 		case <-ctx.Done():
+			p.log.Info("[%s]handler returns some error. stop change visibility for retry", target.GetChangeVisibilityID())
 			return
 		case <-time.After(30 * time.Second)	:
 			p.mu.Lock()
@@ -46,10 +47,10 @@ func (p *ProcessManager) changeMessageVisibility(target types.Message, ctx conte
 func (p *ProcessManager)runWorker(target types.Message,cancel context.CancelFunc) {
 
 	defer func(){
-		p.log.Info("worker done [%s]", target.GetID())
+		p.log.Info("worker done [%s]", target.GetDeduplicationID())
 		p.wg.Done()
 	}()
-	p.log.Debug("worker start [%s]", target.GetID())
+	p.log.Debug("worker start [%s]", target.GetDeduplicationID())
 
 	result := true
 	start := time.Now()
@@ -60,7 +61,7 @@ func (p *ProcessManager)runWorker(target types.Message,cancel context.CancelFunc
 			p.log.Error(err.Error())
 			result = false
 		} else {
-			p.log.Info("aEnvll handler returns no errors. message is processed correctly")
+			p.log.Info("all handler returns no errors. message is processed correctly")
 		}
 		p.log.Debug("worker takes %d msec", (time.Now().UnixNano()-start.UnixNano())/int64(time.Millisecond))
 	}
@@ -69,14 +70,12 @@ func (p *ProcessManager)runWorker(target types.Message,cancel context.CancelFunc
 	p.log.Info("all worker end" )
 
 	if result {
-		p.log.Debug("delete message %s", target.GetDeleteID())
+		p.log.Debug("delete message %s", target.GetDeduplicationID())
 		cancel()
 		p.mu.Lock()
 		defer p.mu.Unlock()
 		if err := p.queue.DeleteMessage(target); err != nil {
 			p.log.Error("delete message error : [%s]", err.Error())
-		} else {
-			target.SetDeleted(true)
 		}
 	}
 }
@@ -92,7 +91,7 @@ func (s *Subscriber) Exec(queue types.QueueDriver,handlers []types.Handler) {
 	}
 	for{
 		msg := <- s.msgChan
-		s.log.Debug("start processing message %s", msg.GetDeleteID())
+		s.log.Debug("start processing message %s", msg.GetDeduplicationID())
 		ctx := context.Background()
 		ctxChild, cancel := context.WithCancel(ctx)
 
