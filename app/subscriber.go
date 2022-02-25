@@ -58,6 +58,7 @@ func (s *Subscriber) Listen(pollingSize int) {
 			wg.Add(1)
 
 			go func(target types.Message) {
+				s.log.Debug("start processing message %d", target.GetDeleteID())
 				mu := &sync.Mutex{}
 				done := new(bool)
 				*done = false
@@ -86,6 +87,7 @@ func (s *Subscriber) Listen(pollingSize int) {
 						if err := queue.ChangeMessageVisibility(target, 10); err != nil {
 							s.log.Error(err.Error())
 						}
+						s.log.Debug("delete message %d", target.GetDeleteID())
 						if err := queue.DeleteMessage(target); err != nil {
 							s.log.Error(err.Error())
 						} else {
@@ -121,11 +123,13 @@ func ChangeMessageVisibility(queue types.QueueDriver, target types.Message, mu *
 			return
 		}
 		if !(target.IsDeleted()) {
+			log.Debug("start processing message %d", target.GetDeleteID())
 			if err := queue.ChangeMessageVisibility(target,60); err != nil {
 				log.Error(err.Error())
 				return
 			}
 		} else {
+			log.Debug("message is deleted %d", target.GetDeleteID())
 			return
 		}
 		mu.Unlock()
