@@ -103,6 +103,7 @@ func (s *Subscriber) Listen(pollingSize int) {
 		s.log.Info("wait for done [%s]",processID)
 		wg.Wait()
 		s.log.Info("done [%s]",processID)
+		time.Sleep(1 * time.Second)
 	}
 }
 
