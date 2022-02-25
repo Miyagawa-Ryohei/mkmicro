@@ -60,7 +60,7 @@ func (p *ProcessManager)runWorker(target types.Message,cancel context.CancelFunc
 			p.log.Error(err.Error())
 			result = false
 		} else {
-			p.log.Info("all handler returns no errors. message is processed correctly")
+			p.log.Info("aEnvll handler returns no errors. message is processed correctly")
 		}
 		p.log.Debug("worker takes %d msec", (time.Now().UnixNano()-start.UnixNano())/int64(time.Millisecond))
 	}
@@ -174,6 +174,8 @@ func NewSubscriber(src types.SessionManager, logger types.Logger, c types.Handle
 	}
 	return &Subscriber{
 		src:       src,
+		msgChan:   make(chan types.Message),
+		wg: 		&sync.WaitGroup{},
 		log:       log,
 		container: c,
 	}
