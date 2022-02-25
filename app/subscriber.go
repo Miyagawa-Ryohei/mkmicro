@@ -57,18 +57,17 @@ func (s *Subscriber) Listen(pollingSize int) {
 
 		s.log.Debug("%d message is received", len(messages))
 		wg := &sync.WaitGroup{}
+		mu := &sync.Mutex{}
 		for _, m := range msgs {
 			wg.Add(1)
-
 			go func(target types.Message) {
-				s.log.Debug("start processing message %s", target.GetID())
-				mu := &sync.Mutex{}
+				s.log.Debug("start processing message %s", target.GetDeleteID())
 				done := new(bool)
 				*done = false
 				go ChangeMessageVisibility(queue, target, mu, done, s.log)
 				go func(target types.Message, mu *sync.Mutex, done *bool) {
 					defer wg.Done()
-					s.log.Debug("worker start [%s]", target.GetID())
+					s.log.Debug("worker start [%s]", target.GetDeleteID())
 					result := true
 					start := time.Now()
 					for _, handler := range handlers {
@@ -90,7 +89,7 @@ func (s *Subscriber) Listen(pollingSize int) {
 						if err := queue.ChangeMessageVisibility(target, 10); err != nil {
 							s.log.Error(err.Error())
 						}
-						s.log.Debug("delete message %s", target.GetID())
+						s.log.Debug("delete message %s", target.GetDeleteID())
 						if err := queue.DeleteMessage(target); err != nil {
 							s.log.Error(err.Error())
 						} else {
