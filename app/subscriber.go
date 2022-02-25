@@ -41,7 +41,7 @@ func (s *Subscriber) Listen(pollingSize int) {
 			s.log.Info("message queue is empty, re-polling after 10 second")
 			time.Sleep(10 * time.Second)
 		}
-		msgs := []types.Message{}
+		//msgs := []types.Message{}
 		//
 		//for _, m := range messages {
 		//	exist := false
@@ -58,7 +58,7 @@ func (s *Subscriber) Listen(pollingSize int) {
 		s.log.Debug("%d message is received", len(messages))
 		wg := &sync.WaitGroup{}
 		mu := &sync.Mutex{}
-		for _, m := range msgs {
+		for _, m := range messages {
 			wg.Add(1)
 			go func(target types.Message) {
 				s.log.Debug("start processing message %s", target.GetDeleteID())
