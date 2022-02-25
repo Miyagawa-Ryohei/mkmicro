@@ -3,6 +3,7 @@ package queue
 import (
 	"bytes"
 	"context"
+	"crypto/sha256"
 	"github.com/Miyagawa-Ryohei/mkmicro/types"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
@@ -23,6 +24,14 @@ type SQSDriver struct {
 type SQSMessage struct {
 	raw     *awsTypes.Message
 	deleted bool
+}
+
+func (m *SQSMessage) GetDeduplicationID() string {
+	body := m.GetBody()
+	hash := sha256.New()
+	hash.Write(body)
+	v := hash.Sum(nil)
+	return string(v)
 }
 
 func (m *SQSMessage) GetBody() []byte {
