@@ -80,8 +80,6 @@ func (d *SQSDriver) parseMessage(msgs []awsTypes.Message) []types.Message {
 		hash := sha256.New()
 		hash.Write(body)
 		v := hex.EncodeToString(hash.Sum(nil))
-		fmt.Printf("message id %s", *m.MessageId)
-		fmt.Printf("receipt handle %s", *m.ReceiptHandle)
 		ret = append(ret, &SQSMessage{
 			raw:     &m,
 			deduplicationKey: v,
