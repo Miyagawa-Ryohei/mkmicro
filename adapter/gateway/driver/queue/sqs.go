@@ -23,15 +23,12 @@ type SQSDriver struct {
 
 type SQSMessage struct {
 	raw     *awsTypes.Message
+	deduplicationKey string
 	deleted bool
 }
 
 func (m *SQSMessage) GetDeduplicationID() string {
-	body := m.GetBody()
-	hash := sha256.New()
-	hash.Write(body)
-	v := hash.Sum(nil)
-	return string(v)
+	return m.deduplicationKey
 }
 
 func (m *SQSMessage) GetBody() []byte {
@@ -78,8 +75,13 @@ func (d *SQSDriver) PutMessage(raw []byte, delay int32) error {
 func (d *SQSDriver) parseMessage(msgs []awsTypes.Message) []types.Message {
 	ret := []types.Message{}
 	for _, m := range msgs {
+		body := bytes.NewBufferString(*m.Body).Bytes()
+		hash := sha256.New()
+		hash.Write(body)
+		v := string(hash.Sum(nil))
 		ret = append(ret, &SQSMessage{
 			raw:     &m,
+			deduplicationKey: v,
 			deleted: false,
 		})
 	}

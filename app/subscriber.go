@@ -38,14 +38,18 @@ func (s *Subscriber) Listen(pollingSize int) {
 			continue
 		}
 		s.log.Info("start message processor [%s]",processID)
-		if len(messages) == 0 {
+
+		msgs := deduplicationMessages(messages)
+
+		if len(msgs) == 0 {
 			s.log.Info("message queue is empty, re-polling after 10 second")
 			time.Sleep(10 * time.Second)
 		}
 
 		s.log.Debug("%d message is received", len(messages))
+		s.log.Debug("%d message is processed", len(msgs))
 		wg := &sync.WaitGroup{}
-		for _, m := range messages {
+		for _, m := range msgs {
 			wg.Add(1)
 			processor := func() {
 				mu := &sync.Mutex{}
@@ -114,6 +118,27 @@ func (s *Subscriber) Listen(pollingSize int) {
 		s.log.Info("done [%s]",processID)
 		time.Sleep(1 * time.Second)
 	}
+}
+
+func deduplicationMessages(message []types.Message) []types.Message{
+	if len(message) < 1 {
+		return []types.Message{}
+	}
+	msg := []types.Message{}
+	for _, m1 := range message {
+		m1Key := m1.GetDeduplicationID()
+		find := false
+		for _, m2 := range msg {
+			m2Key := m2.GetDeduplicationID()
+			if m2Key == m1Key{
+				find = true
+			}
+		}
+		if !find {
+			msg = append(msg,m1)
+		}
+	}
+	return msg
 }
 
 func NewSubscriber(src types.SessionManager, logger types.Logger, c types.HandlerContainer) *Subscriber {
