@@ -42,18 +42,18 @@ func (s *Subscriber) Listen(pollingSize int) {
 			time.Sleep(10 * time.Second)
 		}
 		msgs := []types.Message{}
-
-		for _, m := range messages {
-			exist := false
-			for _, m2 := range msgs {
-				if m.GetDeduplicationID() == m2.GetDeduplicationID() {
-					exist = true
-				}
-			}
-			if !exist {
-				msgs = append(msgs, m)
-			}
-		}
+		//
+		//for _, m := range messages {
+		//	exist := false
+		//	for _, m2 := range msgs {
+		//		if m.GetDeduplicationID() == m2.GetDeduplicationID() {
+		//			exist = true
+		//		}
+		//	}
+		//	if !exist {
+		//		msgs = append(msgs, m)
+		//	}
+		//}
 
 		s.log.Debug("%d message is received", len(messages))
 		wg := &sync.WaitGroup{}
