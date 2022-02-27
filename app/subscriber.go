@@ -30,11 +30,12 @@ func (p *ProcessManager) changeMessageVisibility(target types.Message, ctx conte
 	for {
 		select {
 		case <-ctx.Done():
-			p.log.Info("[%s]handler returns some error. stop change visibility for retry", target.GetChangeVisibilityID())
+			p.log.Info("[%s] worker is done. stop update visibility timeout", target.GetChangeVisibilityID())
 			return
-		case <-time.After(30 * time.Second)	:
+		case <-time.After(20 * time.Second)	:
 			p.mu.Lock()
 			if !(target.IsDeleted()) {
+				p.log.Debug("[%s] update visibility", target.GetChangeVisibilityID())
 				if err := p.queue.ChangeMessageVisibility(target,60); err != nil {
 					p.log.Error(err.Error())
 				}
@@ -47,35 +48,35 @@ func (p *ProcessManager) changeMessageVisibility(target types.Message, ctx conte
 func (p *ProcessManager)runWorker(target types.Message,cancel context.CancelFunc) {
 
 	defer func(){
-		p.log.Info("worker done [%s]", target.GetDeduplicationID())
+		p.log.Info("[%s] worker done", target.GetDeduplicationID())
 		p.wg.Done()
 	}()
-	p.log.Debug("worker start [%s]", target.GetDeduplicationID())
+	p.log.Debug("[%s] worker start", target.GetDeduplicationID())
 
 	result := true
 	start := time.Now()
 
 	for _, handler := range p.handlers {
 		if err := handler.Exec(target, p.sess); err != nil {
-			p.log.Info("[%s]handler returns some error. stop change visibility for retry")
+			p.log.Info("[%s] handler returns some error. stop change visibility for retry", target.GetDeduplicationID())
 			p.log.Error(err.Error())
 			result = false
 		} else {
-			p.log.Info("all handler returns no errors. message is processed correctly")
+			p.log.Info("[%s] handler returns no errors. message is processed correctly", target.GetDeduplicationID())
 		}
 		p.log.Debug("worker takes %d msec", (time.Now().UnixNano()-start.UnixNano())/int64(time.Millisecond))
 	}
 
 	p.log.Debug("all worker takes %d msec",  (time.Now().UnixNano()-start.UnixNano())/int64(time.Millisecond))
-	p.log.Info("all worker end" )
+	p.log.Info("[%s] all worker end", target.GetDeduplicationID())
 
+	cancel()
 	if result {
-		p.log.Debug("delete message %s", target.GetDeduplicationID())
-		cancel()
+		p.log.Debug("[%s] delete message", target.GetDeduplicationID())
 		p.mu.Lock()
 		defer p.mu.Unlock()
 		if err := p.queue.DeleteMessage(target); err != nil {
-			p.log.Error("delete message error : [%s]", err.Error())
+			p.log.Error("[%s] delete message error : [%s]", target.GetDeduplicationID(), err.Error())
 		}
 	}
 }
@@ -91,7 +92,7 @@ func (s *Subscriber) Exec(queue types.QueueDriver,handlers []types.Handler) {
 	}
 	for{
 		msg := <- s.msgChan
-		s.log.Debug("start processing message %s", msg.GetDeduplicationID())
+		s.log.Debug("[%s] start processing message", msg.GetDeduplicationID())
 		ctx := context.Background()
 		ctxChild, cancel := context.WithCancel(ctx)
 
@@ -125,23 +126,23 @@ func (s *Subscriber) Listen(pollingSize int) {
 			time.Sleep(60 * time.Second)
 			continue
 		}
-		s.log.Info("start message processor [%s]",processID)
 		msgs := deduplicationMessages(messages)
 
 		if len(msgs) == 0 {
-			s.log.Info("message queue is empty, re-polling after 10 second")
+			s.log.Info("[%s] message queue is empty, re-polling after 10 second", processID)
 			time.Sleep(10 * time.Second)
+			continue
 		}
-
-		s.log.Debug("%d message is received", len(messages))
-		s.log.Debug("%d message is processed", len(msgs))
+		s.log.Info("[%s] start message processor", processID)
+		s.log.Debug("[%s] %d message is received", processID, len(messages))
+		s.log.Debug("[%s] %d message is processed", processID, len(msgs))
 		for _, m := range msgs {
 			s.wg.Add(1)
 			s.msgChan <- m
 		}
-		s.log.Info("wait for done [%s]",processID)
+		s.log.Info("[%s] wait for done",processID)
 		s.wg.Wait()
-		s.log.Info("done [%s]",processID)
+		s.log.Info("[%s] done message processor",processID)
 	}
 }
 
