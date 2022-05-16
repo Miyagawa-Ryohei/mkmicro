@@ -26,6 +26,9 @@ func (d *StorageProxy) Get(root string, path string) ([]byte, error) {
 func (d *StorageProxy) Put(root string, path string, raw []byte) error {
 	return d.driver.Put(root, path, raw)
 }
+func (d *StorageProxy) Download(bucket string, key string, dist string) error {
+	return d.driver.Download(bucket, key, dist)
+}
 
 func NewStorageProxy(session types.StorageSessionUpdater) (types.StorageDriver, error) {
 	d, err := session.UpdateStorage(nil)
