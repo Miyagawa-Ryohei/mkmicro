@@ -53,7 +53,7 @@ func (d *S3Driver) Get(bucket string, key string) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func (d *S3Driver) GetByStream(bucket string, key string) (io.Reader, error) {
+func (d *S3Driver) GetByStream(bucket string, key string) (io.ReadCloser, error) {
 	param := &s3.GetObjectInput{
 		Bucket: aws.String(bucket),
 		Key:    aws.String(key),

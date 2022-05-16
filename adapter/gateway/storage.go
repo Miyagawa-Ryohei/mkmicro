@@ -28,7 +28,7 @@ func (d *StorageProxy) Put(root string, path string, raw []byte) error {
 	return d.driver.Put(root, path, raw)
 }
 
-func (d *StorageProxy) GetByStream(bucket string, key string) (io.Reader, error) {
+func (d *StorageProxy) GetByStream(bucket string, key string) (io.ReadCloser, error) {
 	return d.driver.GetByStream(bucket, key)
 }
 
