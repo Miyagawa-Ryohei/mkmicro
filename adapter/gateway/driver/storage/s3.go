@@ -6,6 +6,9 @@ import (
 	"github.com/Miyagawa-Ryohei/mkmicro/types"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"io"
+	"os"
+	"path"
 )
 
 type S3Driver struct {
@@ -48,6 +51,40 @@ func (d *S3Driver) Get(bucket string, key string) ([]byte, error) {
 		return nil, err
 	}
 	return buf.Bytes(), nil
+}
+
+func (d *S3Driver) Download(bucket string, key string, dist string) error {
+	param := &s3.GetObjectInput{
+		Bucket: aws.String(bucket),
+		Key:    aws.String(key),
+	}
+	resp, err := d.s3.GetObject(context.TODO(), param)
+	defer resp.Body.Close()
+	if err != nil {
+		return err
+	}
+
+	dir, _ := path.Split(dist)
+	if dir != "" {
+		if fi, err := os.Stat(dir); os.IsNotExist(err) || !fi.IsDir() {
+			if e := os.MkdirAll(dir, 0755); e != nil {
+				return e
+			}
+		}
+	}
+
+	f, err := os.OpenFile(dist, os.O_CREATE|os.O_WRONLY, 0755)
+	if err != nil {
+		return err
+	}
+
+	if _, err := io.Copy(f, resp.Body); err != nil {
+		return err
+	}
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func NewS3Driver(s *s3.Client, config *types.StorageConfig) *S3Driver {
