@@ -74,6 +74,7 @@ func (d *S3Driver) Download(bucket string, key string, dist string) error {
 	}
 
 	f, err := os.OpenFile(dist, os.O_CREATE|os.O_WRONLY, 0755)
+	defer f.Close()
 	if err != nil {
 		return err
 	}
