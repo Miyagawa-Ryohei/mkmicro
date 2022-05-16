@@ -2,6 +2,7 @@ package gateway
 
 import (
 	"github.com/Miyagawa-Ryohei/mkmicro/types"
+	"io"
 )
 
 type StorageProxy struct {
@@ -26,6 +27,11 @@ func (d *StorageProxy) Get(root string, path string) ([]byte, error) {
 func (d *StorageProxy) Put(root string, path string, raw []byte) error {
 	return d.driver.Put(root, path, raw)
 }
+
+func (d *StorageProxy) GetByStream(bucket string, key string) (io.Reader, error) {
+	return d.driver.GetByStream(bucket, key)
+}
+
 func (d *StorageProxy) Download(bucket string, key string, dist string) error {
 	return d.driver.Download(bucket, key, dist)
 }
