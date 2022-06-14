@@ -11,5 +11,5 @@ type HandlerContainer interface {
 }
 
 type Handler interface {
-	Exec(msg Message, dist SessionManager) error
+	Exec(msg Message) error
 }
