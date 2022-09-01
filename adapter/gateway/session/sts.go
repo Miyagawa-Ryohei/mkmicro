@@ -16,13 +16,11 @@ import (
 	"os"
 )
 
-
-
-type DefaultEndpointResolver struct {}
+type DefaultEndpointResolver struct{}
 
 func (c DefaultEndpointResolver) ResolveEndpoint(service string, region string, options ...interface{}) (aws.Endpoint, error) {
 	return aws.Endpoint{
-		PartitionID:   service,
+		PartitionID: service,
 
 		SigningRegion: region,
 		SigningMethod: "s3v4",
@@ -63,9 +61,9 @@ func (p CustomCredentialProvider) Retrieve(ctx context.Context) (aws.Credentials
 }
 
 type STSManager struct {
-	queue         *types.QueueDriver
+	queue         types.QueueDriver
 	queueConfig   *types.QueueConfig
-	storage       *types.StorageDriver
+	storage       types.StorageDriver
 	storageConfig *types.StorageConfig
 }
 
@@ -78,9 +76,9 @@ func (s *STSManager) GetQueue() (types.QueueDriver, error) {
 		if err != nil {
 			return nil, err
 		}
-		s.queue = &q
+		s.queue = q
 	}
-	return *s.queue, nil
+	return s.queue, nil
 }
 
 func (s *STSManager) CreateQueueWithConfig(cfg types.QueueConfig) (types.QueueDriver, error) {
@@ -118,9 +116,9 @@ func (s *STSManager) GetStorage() (types.StorageDriver, error) {
 		if err != nil {
 			return nil, err
 		}
-		s.storage = &st
+		s.storage = st
 	}
-	return *s.storage, nil
+	return s.storage, nil
 }
 func (s *STSManager) getAWSConfig(customConfig types.AWSConfig) (*aws.Config, error) {
 	resolver := getResolvers(customConfig)
