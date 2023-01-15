@@ -36,6 +36,10 @@ func (d *StorageProxy) Download(bucket string, key string, dist string) error {
 	return d.driver.Download(bucket, key, dist)
 }
 
+func (d *StorageProxy) List(bucket string, prefix string) (list []string, err error, next func() ([]string, error)) {
+	return d.driver.List(bucket, prefix)
+}
+
 func NewStorageProxy(session types.StorageSessionUpdater) (types.StorageDriver, error) {
 	d, err := session.UpdateStorage(nil)
 	if err != nil {

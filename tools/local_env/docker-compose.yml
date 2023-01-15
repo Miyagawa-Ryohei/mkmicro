@@ -10,12 +10,5 @@ services:
       - HOSTNAME_EXTERNAL=localstack
     volumes:
       - ./docker-entrypoint-initaws.d:/docker-entrypoint-initaws.d
-      - ./volumes/localstack:/tmp/localstack # ローカルディレクトリをデータ保存ディレクトリへマウント
     ports:
-      - 4566:4566 # サービスへのアクセスポートは4566
-  sqs-insights:
-    image: sqs-insight:latest
-    volumes:
-      - ./mounts/sqs-insight/config:/app/config
-    ports:
-      - 13000:3000 # サービスへのアクセスポートは4566
+      - 4566:4566

@@ -63,6 +63,11 @@ func (d *LocalFileDriver) Download(bucket string, key string, dist string) error
 	return nil
 }
 
+func (d *LocalFileDriver) List(root string, prefix string) (list []string, err error, next func() ([]string, error)) {
+	return []string{}, nil, func() ([]string, error) {
+		return []string{}, nil
+	}
+}
 func NewLocalFileDriver(config *types.StorageConfig) *LocalFileDriver {
 	return &LocalFileDriver{
 		config: config,

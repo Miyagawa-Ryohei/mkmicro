@@ -6,6 +6,8 @@ import (
 	"github.com/Miyagawa-Ryohei/mkmicro/types"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	s3Types "github.com/aws/aws-sdk-go-v2/service/s3/types"
+	"github.com/google/uuid"
 	"io"
 	"os"
 	"path"
@@ -99,6 +101,45 @@ func (d *S3Driver) Download(bucket string, key string, dist string) error {
 		return err
 	}
 	return nil
+}
+
+func (d *S3Driver) List(bucket string, prefix string) (list []string, err error, next func() ([]string, error)) {
+	t := uuid.New()
+
+	parseToStringArray := func(contents []s3Types.Object) (ret []string) {
+		ret = []string{}
+		for _, object := range contents {
+			ret = append(ret, *object.Key)
+		}
+		return
+	}
+	param := &s3.ListObjectsV2Input{
+		Bucket:            aws.String(bucket),
+		Prefix:            aws.String(prefix),
+		ContinuationToken: aws.String(t.String()),
+	}
+
+	resp, err := d.s3.ListObjectsV2(context.TODO(), param)
+	if err != nil {
+		return nil, err, nil
+	}
+
+	return parseToStringArray(resp.Contents), nil, func() ([]string, error) {
+		if resp.IsTruncated != true {
+			return []string{}, nil
+		}
+		param := &s3.ListObjectsV2Input{
+			Bucket:            aws.String(bucket),
+			Prefix:            aws.String(prefix),
+			ContinuationToken: resp.NextContinuationToken,
+			StartAfter:        resp.Contents[len(resp.Contents)-1].Key,
+		}
+		resp, err = d.s3.ListObjectsV2(context.TODO(), param)
+		if err != nil {
+			return nil, err
+		}
+		return parseToStringArray(resp.Contents), err
+	}
 }
 
 func NewS3Driver(s *s3.Client, config *types.StorageConfig) *S3Driver {

@@ -3,20 +3,45 @@ package session
 import (
 	"bytes"
 	"github.com/Miyagawa-Ryohei/mkmicro/types"
-	"os"
 	"testing"
 	"time"
 )
 
+const (
+	testBucket = "sts-test-bucket"
+)
+
+func QueueConfig() types.QueueConfig {
+	return types.QueueConfig{
+		URL: "http://localstack:4566/000000000000/test_queue",
+		Endpoint: &types.EndPoint{
+			Region: "ap-northeast-1",
+			URL:    "http://localhost:4566",
+		},
+		Credential: &types.Credential{
+			AccessKey:       "dummy",
+			AccessKeySecret: "dummy",
+		},
+	}
+}
+
+func StorageConfig() types.StorageConfig {
+	return types.StorageConfig{
+		Endpoint: &types.EndPoint{
+			Region: "ap-northeast-1",
+			URL:    "http://localhost:4566",
+		},
+		Credential: &types.Credential{
+			AccessKey:       "dummy",
+			AccessKeySecret: "dummy",
+		},
+	}
+}
+
 func Test_DefaultProfilePutAndGet(t *testing.T) {
 	now := time.Now().Format(time.RFC3339)
 	object := bytes.NewBufferString(t.Name() + now).Bytes()
-	cfg := types.StorageConfig{
-		Endpoint: &types.EndPoint{
-			Region: "ap-northeast-1",
-			URL:    "http://localhost:9000",
-		},
-	}
+	cfg := StorageConfig()
 	f := NewSTSManagerFactory(types.QueueConfig{}, cfg)
 	s, err := f.Create()
 	if err != nil {
@@ -27,11 +52,11 @@ func Test_DefaultProfilePutAndGet(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if err := storage.Put("sample", t.Name(), object); err != nil {
+		if err := storage.Put(testBucket, t.Name(), object); err != nil {
 			t.Fatal(err)
 		}
 
-		buf, err := storage.Get("sample", t.Name())
+		buf, err := storage.Get(testBucket, t.Name())
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -42,13 +67,10 @@ func Test_DefaultProfilePutAndGet(t *testing.T) {
 }
 
 func Test_AssumeRolePutAndGet(t *testing.T) {
+	t.Skip("this test needs aws sts environment")
 	now := time.Now().Format(time.RFC3339)
 	object := bytes.NewBufferString(t.Name() + now).Bytes()
-	cfg := types.StorageConfig{
-		Profile: &types.Profile{
-			AssumeRoleArn: "arn:aws:iam::845799411254:role/S3UserRole",
-		},
-	}
+	cfg := StorageConfig()
 	f := NewSTSManagerFactory(types.QueueConfig{}, cfg)
 	s, err := f.Create()
 	if err != nil {
@@ -60,11 +82,11 @@ func Test_AssumeRolePutAndGet(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if err := storage.Put("mkmicrotest", t.Name(), object); err != nil {
+		if err := storage.Put(testBucket, t.Name(), object); err != nil {
 			t.Fatal(err)
 		}
 
-		buf, err := storage.Get("mkmicrotest", t.Name())
+		buf, err := storage.Get(testBucket, t.Name())
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -75,13 +97,7 @@ func Test_AssumeRolePutAndGet(t *testing.T) {
 }
 
 func Test_Queue(t *testing.T) {
-	cfg := types.QueueConfig{
-		URL: os.Getenv("AWS_QUEUE_URL"),
-		Credential: &types.Credential{
-			AccessKey:       os.Getenv("AWS_ACCESS_KEY_ID"),
-			AccessKeySecret: os.Getenv("AWS_ACCESS_KEY_SECRET"),
-		},
-	}
+	cfg := QueueConfig()
 	f := NewSTSManagerFactory(cfg, types.StorageConfig{})
 	s, err := f.Create()
 	if err != nil {
@@ -93,7 +109,7 @@ func Test_Queue(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if err := q.PutMessage(bytes.NewBufferString("HelloQueue").Bytes()); err != nil {
+		if err := q.PutMessage(bytes.NewBufferString("HelloQueue").Bytes(), 0); err != nil {
 			t.Fatal(err)
 		}
 	})
@@ -102,7 +118,7 @@ func Test_Queue(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if err := q.PutMessage(bytes.NewBufferString("HelloQueue").Bytes()); err != nil {
+		if err := q.PutMessage(bytes.NewBufferString("HelloQueue").Bytes(), 0); err != nil {
 			t.Fatal(err)
 		}
 		messages, err := q.GetMessage(10)
