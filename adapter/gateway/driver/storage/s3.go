@@ -68,6 +68,30 @@ func (d *S3Driver) GetByStream(bucket string, key string) (io.ReadCloser, error)
 	return resp.Body, nil
 }
 
+func (d *S3Driver) GetKeyCount(bucket string, prefix string) (uint64, error) {
+	param := s3.ListObjectsV2Input{
+		Bucket: aws.String(bucket),
+		Prefix: aws.String(prefix),
+	}
+
+	var count uint64 = 0
+	for {
+		res, err := d.s3.ListObjectsV2(context.TODO(), &param)
+		if err != nil {
+			return 0, err
+		}
+
+		count += uint64(res.KeyCount)
+		if !res.IsTruncated {
+			break
+		}
+
+		param.ContinuationToken = res.NextContinuationToken
+	}
+
+	return count, nil
+}
+
 func (d *S3Driver) Download(bucket string, key string, dist string) error {
 	param := &s3.GetObjectInput{
 		Bucket: aws.String(bucket),
